@@ -1,10 +1,10 @@
 CREATE DATABASE  IF NOT EXISTS `db_nganhang` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
 USE `db_nganhang`;
--- MySQL dump 10.13  Distrib 8.0.19, for Win64 (x86_64)
+-- MySQL dump 10.13  Distrib 8.0.21, for Win64 (x86_64)
 --
 -- Host: localhost    Database: db_nganhang
 -- ------------------------------------------------------
--- Server version	8.0.19
+-- Server version	8.0.21
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -46,34 +46,6 @@ LOCK TABLES `activity_log` WRITE;
 UNLOCK TABLES;
 
 --
--- Table structure for table `admin_account`
---
-
-DROP TABLE IF EXISTS `admin_account`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `admin_account` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `name` varchar(50) NOT NULL,
-  `active` tinyint(1) DEFAULT NULL,
-  `username` varchar(50) NOT NULL,
-  `password` varchar(255) NOT NULL,
-  PRIMARY KEY (`id`),
-  CONSTRAINT `admin_account_chk_1` CHECK ((`active` in (0,1)))
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `admin_account`
---
-
-LOCK TABLES `admin_account` WRITE;
-/*!40000 ALTER TABLE `admin_account` DISABLE KEYS */;
-INSERT INTO `admin_account` VALUES (1,'Admin_1',1,'admin1','e00cf25ad42683b3df678c61f42c6bda');
-/*!40000 ALTER TABLE `admin_account` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `customer`
 --
 
@@ -84,7 +56,7 @@ CREATE TABLE `customer` (
   `id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL,
   `identity_card_number` int NOT NULL,
-  `gender` varchar(10) DEFAULT NULL,
+  `gender` enum('MALE','FEMALE','OTHER') DEFAULT NULL,
   `date_of_birth` date DEFAULT NULL,
   `phone` varchar(30) DEFAULT NULL,
   `address` varchar(100) DEFAULT NULL,
@@ -113,16 +85,19 @@ CREATE TABLE `employee` (
   `username` varchar(50) NOT NULL,
   `password` varchar(255) NOT NULL,
   `name` varchar(50) NOT NULL,
-  `gender` varchar(10) DEFAULT NULL,
+  `gender` enum('MALE','FEMALE','OTHER') DEFAULT NULL,
   `date_of_birth` date DEFAULT NULL,
   `phone` varchar(30) DEFAULT NULL,
   `address` varchar(100) DEFAULT NULL,
-  `start_work_date` date NOT NULL,
-  `position_id` int NOT NULL,
+  `active` tinyint(1) NOT NULL,
+  `employee_role` enum('ADMIN','EMPLOYEE') DEFAULT NULL,
+  `start_work_date` date DEFAULT NULL,
+  `position_id` int DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `position_id` (`position_id`),
-  CONSTRAINT `employee_ibfk_1` FOREIGN KEY (`position_id`) REFERENCES `position` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  CONSTRAINT `employee_ibfk_1` FOREIGN KEY (`position_id`) REFERENCES `position` (`id`),
+  CONSTRAINT `employee_chk_1` CHECK ((`active` in (0,1)))
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -131,7 +106,7 @@ CREATE TABLE `employee` (
 
 LOCK TABLES `employee` WRITE;
 /*!40000 ALTER TABLE `employee` DISABLE KEYS */;
-INSERT INTO `employee` VALUES (1,'nbdat22','c4ca4238a0b923820dcc509a6f75849b','Nguyễn Bá Đạt','Nam','1999-07-31','0938622780',NULL,'2020-08-23',1),(2,'nxhung54','c4ca4238a0b923820dcc509a6f75849b','Nguyễn Xuân Hưng','Nam','1999-10-03',NULL,NULL,'2020-08-24',2);
+INSERT INTO `employee` VALUES (1,'admin1','471e6604ad6b4f9b85a81305feefb4f7','Quản trị viên - 1','MALE',NULL,'',NULL,1,'ADMIN',NULL,NULL),(2,'nbdat22','2e678024cabebdfe17a5aeef0163fe6d','Bá Đạt','MALE','1999-07-31','09386227801','',1,'EMPLOYEE','2020-08-28',1);
 /*!40000 ALTER TABLE `employee` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -179,9 +154,9 @@ CREATE TABLE `passbook_type` (
   `minimum_deposit_date` int NOT NULL,
   `interest_rate` float NOT NULL,
   `apply_date` date NOT NULL,
-  `term` int NOT NULL,
+  `term` enum('TERM','NON_TERM') NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -190,7 +165,6 @@ CREATE TABLE `passbook_type` (
 
 LOCK TABLES `passbook_type` WRITE;
 /*!40000 ALTER TABLE `passbook_type` DISABLE KEYS */;
-INSERT INTO `passbook_type` VALUES (1,'Không kỳ hạn',100000,15,0.0015,'2020-08-23',0),(2,'Có kỳ hạn 3',100000,15,0.005,'2020-08-23',3),(3,'Có kỳ hạn 6',100000,20,0.0055,'2020-08-23',6);
 /*!40000 ALTER TABLE `passbook_type` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -262,4 +236,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-08-23 23:27:55
+-- Dump completed on 2020-09-01 16:42:08

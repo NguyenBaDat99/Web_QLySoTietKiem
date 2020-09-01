@@ -1,20 +1,29 @@
-from app import app
-import json
-import os
+from app import db
+from app.models import Employee
+
 import hashlib
 
 
-# def load_admin():
-#     with open(os.path.join(app.root_path, "data/admin_account.json"), encoding="utf-8") as f:
-#         return json.load(f)
-#
-#
-# def check_login(username, password):
-#     admins = load_admin()
-#
-#     password = str(hashlib.md5(password.strip().encode("utf-8")).hexdigest())
-#     for ad in admins:
-#         if ad["username"].strip().lower() == username.strip().lower() and ad["password"] == password:
-#             return ad
-#
-#     return None
+def employee_change_info(employee_id, name, gender, date_of_birth, phone, address):
+    employee = Employee.query.get(employee_id)
+
+    employee.name = name
+    if gender != '':
+        employee.gender = gender
+    if date_of_birth != '':
+        employee.date_of_birth = date_of_birth
+    employee.phone = phone
+    if address != "None":
+        employee.address = address
+
+    db.session.add(employee)
+    db.session.commit()
+
+
+def employee_change_pass(employee_id, password):
+    employee = Employee.query.get(employee_id)
+
+    employee.password = password
+
+    db.session.add(employee)
+    db.session.commit()
