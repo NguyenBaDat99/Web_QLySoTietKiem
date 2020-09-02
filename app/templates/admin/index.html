@@ -1,10 +1,11 @@
 {% extends "admin/master.html" %}
 
+<link rel="stylesheet" href="static/assets/css/setting.css">
+
 {% block body %}
 {% if current_user.is_authenticated %}
-<h1>WELCOME TO ADMIN PAGE</h1>
-<!--{{current_user.name}}-->
 
+<h1 class="display-4" style="font-size: 1.8rem;">CHÀO MỪNG ĐẾN TRANG QUẢN TRỊ</h1>
 <div class="btn-group">
     <button type="button" class="btn btn-secondary">
         {{ current_user.name }}
@@ -16,6 +17,7 @@
         Đăng xuất
     </a>
 </div>
+
 
 {% else %}
 {% include "accounts/login.html" %}

@@ -1,12 +1,3 @@
-{% extends "layouts/base.html" %}
-
-{% block title %}- Tùy chỉnh tài khoản{% endblock %}
-
-{% block stylesheets %}
-<link rel="stylesheet" href="static/assets/css/setting.css">
-{% endblock %}
-
-{% block content %}
 <br>
 <div class="container" style="max-width: 700px; min-width: 500px">
     <div class="row">
@@ -139,13 +130,11 @@
         </div>
         {% endif %}
         <button type="submit" class="btn btn-success" name="save" value="saveInformation">Lưu thông tin</button>
-        <a class="btn btn-secondary" href="/" role="button">Hủy bỏ</a>
+        <a class="btn btn-secondary" onclick="goBack()" role="button">Hủy bỏ</a>
         <!--        <button type="submit" class="btn btn-secondary mb-2" >Hủy bỏ</button>-->
     </form>
 </div>
-{% endblock content %}
 
-{% block javascripts %}
 <script type="text/javascript">
       const indicator = document.querySelector(".indicator");
       const input = document.querySelector(".inputPassword");
@@ -211,7 +200,9 @@
         if("{{ msg_pass }}" != "" || "{{ err_msg_pass }}" != "" ){
             $('#changePasswordModal').modal('show')
         }
+      }
 
+      function goBack() {
+          window.history.back();
       }
 </script>
-{% endblock %}

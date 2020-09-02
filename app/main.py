@@ -56,10 +56,8 @@ def setting_employee():
             if current_user.password == password_confirm:
                 dao.employee_change_info(current_user.id, name, gender, date_of_birth, phone, address)
                 msg_info = "Cập nhật thông tin tài khoản thành công"
-                return render_template("accounts/setting.html", msg_info=msg_info)
             else:
                 err_msg_info = "Mật khẩu không chính xác"
-                return render_template("accounts/setting.html", err_msg_info=err_msg_info)
         if request.form['save'] == 'savePassword':
 
             new_password = hashlib.md5(request.form.get("newPassword")
@@ -73,14 +71,18 @@ def setting_employee():
                 if current_user.password == old_password_confirm:
                     dao.employee_change_pass(current_user.id, new_password)
                     msg_pass = "Đổi mật khẩu thành công"
-                    return render_template("accounts/setting.html", msg_pass=msg_pass)
                 else:
                     err_msg_pass = "Mật khẩu cũ không chính xác"
-                    return render_template("accounts/setting.html", err_msg_pass=err_msg_pass)
             else:
                 err_msg_pass = "Mật khẩu mới không khớp"
-                return render_template("accounts/setting.html", err_msg_pass=err_msg_pass)
-    return render_template("accounts/setting.html")
+    if current_user.employee_role == EmployeeRole.EMPLOYEE:
+        return render_template("accounts/setting_employee.html",
+                               msg_info=msg_info, err_msg_info=err_msg_info,
+                               msg_pass=msg_pass, err_msg_pass=err_msg_pass)
+    else:
+        return render_template("accounts/setting_admin.html",
+                               msg_info=msg_info, err_msg_info=err_msg_info,
+                               msg_pass=msg_pass, err_msg_pass=err_msg_pass)
 
 
 @login.user_loader
