@@ -1,11 +1,10 @@
 <br>
-<div class="container" style="max-width: 700px; min-width: 500px">
+<div class="container" style="max-width: 750px; min-width: 400px">
     <div class="row">
         <div class="col-8">
             <h1 class="display-4" style="font-size: 1.8rem;">Sửa thông tin tài khoản</h1>
         </div>
-        <div class="col-4">
-            &emsp;&nbsp;
+        <div class="col-4">            &emsp;&nbsp;
             <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#changePasswordModal">
                 Đổi mật khẩu
             </button>
@@ -203,6 +202,10 @@
       }
 
       function goBack() {
-          window.history.back();
+         if("{{ current_user.employee_role }}" == "EmployeeRole.ADMIN"){
+            window.location.href = "/admin";
+         }else{
+            window.location.href = "/";
+         }
       }
 </script>

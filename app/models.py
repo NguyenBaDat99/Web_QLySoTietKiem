@@ -30,11 +30,6 @@ class Gender(enum.Enum):
     OTHER = 3
 
 
-class PassBookTerm(enum.Enum):
-    TERM = 1
-    NON_TERM = 2
-
-
 class Position(db.Model):
     __tablename__ = "position"
 
@@ -51,7 +46,8 @@ class Employee(db.Model, UserMixin):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String(50), nullable=False)
-    password = Column(String(255), nullable=False, default="c4ca4238a0b923820dcc509a6f75849b")
+    password = Column(String(255), nullable=False,
+                      default="6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b")
     name = Column(String(50), nullable=False)
     gender = Column(Enum(Gender), nullable=True)
     date_of_birth = Column(Date, nullable=True)
@@ -107,7 +103,7 @@ class PassbookTypes(db.Model):
     minimum_deposit_date = Column(Integer, nullable=False)
     interest_rate = Column(Float, nullable=False)
     apply_date = Column(Date, nullable=False, default=datetime.datetime.utcnow)
-    term = Column(Enum(PassBookTerm), nullable=False)
+    term = Column(Integer, nullable=False)
     passbooks = relationship('Passbook', backref='passbook_type', lazy=True)
 
     def __str__(self):

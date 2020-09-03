@@ -1,0 +1,48 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}- Tra cứu sổ{% endblock title %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="static/assets/css/passbook_list.css">
+{% endblock stylesheets %}
+
+{% block content %}
+
+<div class="container-fluid ">
+    <div class="row">
+        <div class="col-9">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th scope="col">ID</th>
+                    <th scope="col">Khách hàng</th>
+                    <th scope="col">Loại sổ tiết kiệm</th>
+                    <th scope="col">Số dư</th>
+                    <th scope="col">Ngày mở sổ</th>
+                    <th scope="col">Thao tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for passbook in passbooks %}
+                <tr>
+                    <th scope="row">{{ passbook.id }}</th>
+                    <td>{{ passbook.customer_id }}</td>
+                    <td>{{ passbook.passbook_type_id }}</td>
+                    <td>{{ passbook.balance_amount }}</td>
+                    <td>{{ passbook.open_date }}</td>
+                    <td>
+                        <button class="btn btn-warning">Giao dịch</button>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="col-3 note">
+
+        </div>
+
+    </div>
+</div>
+
+{% endblock content %}

@@ -33,7 +33,7 @@ CREATE TABLE `activity_log` (
   PRIMARY KEY (`id`),
   KEY `employee_id` (`employee_id`),
   CONSTRAINT `activity_log_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employee` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -42,6 +42,7 @@ CREATE TABLE `activity_log` (
 
 LOCK TABLES `activity_log` WRITE;
 /*!40000 ALTER TABLE `activity_log` DISABLE KEYS */;
+INSERT INTO `activity_log` VALUES (1,1,'2020-09-03 09:08:29','Đăng nhập',''),(2,1,'2020-09-03 09:08:50','Đăng xuất',''),(3,1,'2020-09-03 16:11:06','Đăng nhập',''),(4,1,'2020-09-03 16:11:23','Đăng xuất',''),(5,1,'2020-09-03 16:11:34','Đăng nhập',''),(6,1,'2020-09-03 16:22:25','Sửa thông tin tài khoản',''),(7,1,'2020-09-03 16:22:31','Sửa thông tin tài khoản','Cập nhật thông tin tài khoản thành công'),(8,1,'2020-09-03 16:23:35','Sửa thông tin tài khoản','Mật khẩu không chính xác'),(9,2,'2020-09-03 16:24:21','Đăng nhập',''),(10,2,'2020-09-03 16:24:31','Sửa thông tin tài khoản','Mật khẩu mới không khớp'),(11,2,'2020-09-03 16:24:38','Sửa thông tin tài khoản','Mật khẩu không chính xác'),(12,2,'2020-09-03 16:24:42','Đăng xuất',''),(13,1,'2020-09-03 16:24:44','Đăng nhập',''),(14,1,'2020-09-03 16:33:01','Đăng nhập',''),(15,2,'2020-09-03 16:36:59','Đăng nhập',''),(16,2,'2020-09-03 17:04:28','Đăng xuất',''),(17,1,'2020-09-03 17:04:31','Đăng nhập',''),(18,1,'2020-09-03 17:05:27','Đăng nhập',''),(19,2,'2020-09-03 17:06:09','Đăng nhập',''),(20,2,'2020-09-03 21:06:02','Đăng nhập',''),(21,2,'2020-09-03 21:08:44','Đăng xuất',''),(22,1,'2020-09-03 21:08:46','Đăng nhập',''),(23,1,'2020-09-03 21:11:00','Đăng xuất',''),(24,2,'2020-09-03 21:11:15','Đăng nhập',''),(25,2,'2020-09-03 21:18:22','Sửa thông tin tài khoản','Đổi mật khẩu thành công'),(26,2,'2020-09-03 21:18:28','Đăng xuất',''),(27,1,'2020-09-03 21:18:31','Đăng nhập',''),(28,1,'2020-09-03 21:19:43','Sửa thông tin tài khoản','Mật khẩu cũ không chính xác'),(29,1,'2020-09-03 21:19:48','Sửa thông tin tài khoản','Đổi mật khẩu thành công'),(30,2,'2020-09-03 21:20:26','Đăng nhập',''),(31,2,'2020-09-03 22:22:54','Đăng xuất','');
 /*!40000 ALTER TABLE `activity_log` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -106,7 +107,7 @@ CREATE TABLE `employee` (
 
 LOCK TABLES `employee` WRITE;
 /*!40000 ALTER TABLE `employee` DISABLE KEYS */;
-INSERT INTO `employee` VALUES (1,'admin1','471e6604ad6b4f9b85a81305feefb4f7','Quản trị viên - 1','MALE',NULL,'',NULL,1,'ADMIN',NULL,NULL),(2,'nbdat22','2e678024cabebdfe17a5aeef0163fe6d','Bá Đạt','MALE','1999-07-31','09386227801','',1,'EMPLOYEE','2020-08-28',1);
+INSERT INTO `employee` VALUES (1,'admin1','26c749aae4e749de56d43c872cf9ec0ebcbf9040853431b08bc134e713fe26e1','Quản trị viên - 1','MALE',NULL,'',NULL,1,'ADMIN',NULL,NULL),(2,'nbdat22','46f4eda71b571aecedc1a623533c7abe7cfbf7bfae8d5ec694eb6cb6fd7eadd9','Bá Đạt','MALE','1999-07-31','0938622780','',1,'EMPLOYEE','2020-08-28',1);
 /*!40000 ALTER TABLE `employee` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -154,9 +155,9 @@ CREATE TABLE `passbook_type` (
   `minimum_deposit_date` int NOT NULL,
   `interest_rate` float NOT NULL,
   `apply_date` date NOT NULL,
-  `term` enum('TERM','NON_TERM') NOT NULL,
+  `term` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -165,6 +166,7 @@ CREATE TABLE `passbook_type` (
 
 LOCK TABLES `passbook_type` WRITE;
 /*!40000 ALTER TABLE `passbook_type` DISABLE KEYS */;
+INSERT INTO `passbook_type` VALUES (1,'Sổ không kỳ hạn',100000,15,0.0015,'2020-09-03',0),(2,'Sổ có kỳ hạn 3',100000,15,0.005,'2020-09-03',3),(3,'Sổ có kỳ hạn 6',100000,15,0.0055,'2020-09-03',6);
 /*!40000 ALTER TABLE `passbook_type` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -188,7 +190,7 @@ CREATE TABLE `position` (
 
 LOCK TABLES `position` WRITE;
 /*!40000 ALTER TABLE `position` DISABLE KEYS */;
-INSERT INTO `position` VALUES (1,'Manager Employee'),(2,'Teller Employee');
+INSERT INTO `position` VALUES (1,'Nhân viên quản lý'),(2,'Nhân viên giao dịch');
 /*!40000 ALTER TABLE `position` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -236,4 +238,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-09-01 16:42:08
+-- Dump completed on 2020-09-03 22:23:26

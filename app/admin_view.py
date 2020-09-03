@@ -51,6 +51,7 @@ class PositionModelView(AuthenticatedModelView):
     can_export = True
     form_columns = ('position_name',)
     form_filters = ('position_name',)
+    page_size = 15
 
 
 class EmployeeModelView(AuthenticatedModelView):
@@ -62,6 +63,7 @@ class EmployeeModelView(AuthenticatedModelView):
     form_columns = show_column
     column_filters = show_column
     column_list = show_column
+    page_size = 15
 
 
 class ActivityLogModelView(AuthenticatedModelView):
@@ -71,6 +73,7 @@ class ActivityLogModelView(AuthenticatedModelView):
     can_delete = False
     can_edit = False
     column_filters = ('activity_time', 'activity', 'employee_id')
+    page_size = 15
 
 
 class PassbookTypesModelView(AuthenticatedModelView):
@@ -80,6 +83,7 @@ class PassbookTypesModelView(AuthenticatedModelView):
     show_column = 'passbook_type_name', 'minimum_deposit', 'minimum_deposit_date', 'interest_rate', 'apply_date', 'term',
     column_filters = show_column
     form_columns = show_column
+    page_size = 15
 
 
 admin.add_view(PositionModelView(Position, db.session))
