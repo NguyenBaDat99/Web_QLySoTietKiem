@@ -3,7 +3,7 @@
 {% block title %}- Đăng nhập{% endblock %}
 
 {% block content %}
-<div class="jumbotron text-center" >
+<div class="jumbotron text-center">
     <h1 class="display-3" style="color: green">NGÂN HÀNG</h1>
     <p class="lead" style="color: green">Quản lý sổ tiết kiệm</p>
 </div>
@@ -21,10 +21,82 @@
             {{ msg }}
         </div>
         {% endif %}
+        {% if msg_deactive %}
+        <div class="alert alert-danger" role="alert">
+            {{ msg_deactive }}
+        </div>
+        {% endif %}
         <!--            <div class="checkbox">-->
         <!--                <label><input type="checkbox" name="remember">Nhớ mật khẩu</label>-->
         <!--            </div>-->
         <input type="submit" name="btnSignIn" class="btn btn-success" value="Đăng nhập">
+        {% if msg %}
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#forgetPasswordModal">
+            Quên mật khẩu
+        </button>
+        {% endif %}
     </form>
 </div>
+
+<!-- Modal -->
+<div class="modal fade" id="forgetPasswordModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="exampleModalLabel">Hướng dẫn lấy mật khẩu</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="lead" style="font-size: 1.3rem">
+                    <strong>Bước 1</strong>: Nhân viên chắc chắn mình đã quên mật khẩu,
+                    vui lòng nhập tên tài khoản để vô hiệu hóa</p>
+                <br>
+                <form action="{{ url_for('report_password')}}" method="post">
+                    <div class="row">
+                        <div class="form-group col-7">
+                            <input class="form-control" name="username" placeholder="Tên đăng nhập" required>
+                        </div>
+                        <div class="form-group col-5">
+                            <button type="submit" class="btn btn-warning">Báo quên mật khẩu</button>
+                        </div>
+                    </div>
+                    {% if err_msg_pass %}
+                    <div class="alert alert-danger" role="alert">
+                        {{ err_msg_pass }}
+                    </div>
+                    {% endif %}
+                    {% if msg_pass %}
+                    <div class="alert alert-success" role="alert">
+                        {{ msg_pass }}
+                    </div>
+                    {% endif %}
+                </form>
+                <br>
+                <p class="lead" style="font-size: 1.3rem">
+                    <strong>Bước 2</strong>: Nhân viên liên hệ với bộ phận quản lý nhân sự qua SĐT 0933283350
+                    để được hướng dẫn lấy lại mật khẩu
+                    <br>
+                    <i>Mọi thắc mắc xin liên hệ 0933283350 - Bộ phận nhân sự</i>
+                </p>
+                <div class="dropdown-divider"></div>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Đã hiểu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+      function init(){
+        if("{{ msg_pass }}" != "" || "{{ err_msg_pass }}" != "" ){
+            $('#forgetPasswordModal').modal('show')
+        }
+      }
+
+
+
+
+</script>
 {% endblock content %}
+

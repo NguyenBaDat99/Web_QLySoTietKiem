@@ -35,7 +35,33 @@
 
 {% endif %}
 <!-- Specific Page JS goes HERE  -->
-{% block javascripts %}{% endblock javascripts %}
+{% block javascripts %}
+<script>
+    function init() {
+        let time = 3600000;
+        var timeout = 5000;
+        setInterval(function () {
+            timeout -= 1000
+            if (timeout <= 0){
+                logout({{ current_user.id }})
+            }
+        }, 1000);
+}
+
+     function logout(employee_id) {
+                fetch("/api/logout-employee-auto/" + employee_id, {
+                    "method": "post"
+                }).then(res => res.json()).then(res => {
+                    if (res.status == 200) {
+                        alert("Bạn bị đăng xuất do không có hoạt động");
+                        window.location.href = "/";
+                    }
+                }).catch(function(err) {
+
+                })
+            }
+</script>
+{% endblock javascripts %}
 
 
 <!-- jQuery CDN - Slim version (=without AJAX) -->

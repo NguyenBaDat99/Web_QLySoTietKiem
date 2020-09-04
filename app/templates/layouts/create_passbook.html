@@ -8,8 +8,9 @@
 
 {% block content %}
 
-<div class="container-fluid ">
-    <div class="row">
+<div class="container-fluid">
+    <div class="row" style="width:100%">
+<!--    Thông tin khách hàng    -->
         <div class="col">
             <div class="container" style="max-width: 750px; min-width: 400px">
                 <div class="row">
@@ -73,8 +74,16 @@
                 </form>
             </div>
         </div>
+<!--    Tra cứu   -->
         <div class="col">
-            <div class="container" style="max-width: 750px; min-width: 400px">
+            <div class="container" style="max-width: 750px; min-width: 350px">
+                <h1>Tra cứu</h1>
+            </div>
+        </div>
+
+<!--    Thông tin sổ tiết kiệm    -->
+        <div class="col" style="display: none">
+            <div class="container" style="max-width: 750px; min-width: 350px">
                 <div class="row">
                     <h1 class="display-4" style="font-size: 1.8rem;">Thông tin sổ tiết kiệm</h1>
                 </div>
@@ -98,8 +107,7 @@
                     </div>
                     <div class="form-group">
                         <label>Ngày mở sổ</label>
-                        <input type="date" class="form-control" value=""
-                               name="dateOfBirth">
+                        <input type="text" class="form-control" id="openDate" value="" readonly>
                     </div>
                     {% if err_msg_info %}
                     <div class="alert alert-danger" role="alert">
@@ -119,11 +127,24 @@
             </div>
         </div>
 
+<!--     Hoàn tất   -->
+        <div class="col" style="display: none">
+            <div class="container" style="max-width: 750px; min-width: 200px">
+                <div class="row">
+                    <h1 class="display-4" style="font-size: 1.8rem;">Hoàn tất</h1>
+                </div>
+                <div class="dropdown-divider"></div>
+            </div>
+        </div>
     </div>
 </div>
 
 <script type="text/javascript">
       function init(){
+        let d = new Date();
+        document.getElementById("openDate").value = `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
+
+
         if("{{ msg_pass }}" != "" || "{{ err_msg_pass }}" != "" ){
             $('#changePasswordModal').modal('show')
         }
@@ -136,9 +157,6 @@
             window.location.href = "/";
          }
       }
-
-
-
 </script>
 
 {% endblock content %}

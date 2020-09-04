@@ -1,5 +1,6 @@
-from app import db, admin, app, decorator
+from app import db, admin, app, decorator, dao
 from flask import redirect, url_for, request
+from datetime import datetime
 
 from flask_login import current_user
 from flask_login import logout_user
@@ -12,20 +13,36 @@ from app.models import Position, Employee, ActivityLog, PassbookTypes, EmployeeR
 
 class AuthenticatedModelView(ModelView):
     def is_accessible(self):
-        return current_user.is_authenticated and current_user.employee_role == EmployeeRole.ADMIN
+        return current_user.is_authenticated \
+               and current_user.employee_role == EmployeeRole.ADMIN \
+               and current_user.active == True
 
     def inaccessible_callback(self, name, **kwargs):
         # redirect to login page if user doesn't have access
+        activity_time = datetime.now()
+        activity = "Đăng xuất tự động"
+        description = "Nhân viên truy cập vào trang không được phân quyền"
+        employee_id = current_user.id
+        dao.add_activity_log(activity_time=activity_time, activity=activity,
+                             description=description, employee_id=employee_id)
         logout_user()
         return redirect(url_for('login_employee', next=request.url))
 
 
 class AuthenticatedBaseView(BaseView):
     def is_accessible(self):
-        return current_user.is_authenticated and current_user.employee_role == EmployeeRole.ADMIN
+        return current_user.is_authenticated \
+               and current_user.employee_role == EmployeeRole.ADMIN \
+               and current_user.active == True
 
     def inaccessible_callback(self, name, **kwargs):
         # redirect to login page if user doesn't have access
+        activity_time = datetime.now()
+        activity = "Đăng xuất tự động"
+        description = "Nhân viên truy cập vào trang không được phân quyền"
+        employee_id = current_user.id
+        dao.add_activity_log(activity_time=activity_time, activity=activity,
+                             description=description, employee_id=employee_id)
         logout_user()
         return redirect(url_for('login_employee', next=request.url))
 
@@ -39,6 +56,12 @@ class AboutUsView(AuthenticatedBaseView):
 class LogoutView(BaseView):
     @expose("/")
     def index(self):
+        activity_time = datetime.now()
+        activity = "Đăng xuất"
+        description = ""
+        employee_id = current_user.id
+        dao.add_activity_log(activity_time=activity_time, activity=activity,
+                                description=description, employee_id=employee_id)
         logout_user()
         return redirect("/")
 
@@ -51,7 +74,7 @@ class PositionModelView(AuthenticatedModelView):
     can_export = True
     form_columns = ('position_name',)
     form_filters = ('position_name',)
-    page_size = 15
+    page_size = 10
 
 
 class EmployeeModelView(AuthenticatedModelView):
@@ -63,7 +86,7 @@ class EmployeeModelView(AuthenticatedModelView):
     form_columns = show_column
     column_filters = show_column
     column_list = show_column
-    page_size = 15
+    page_size = 10
 
 
 class ActivityLogModelView(AuthenticatedModelView):
@@ -73,7 +96,7 @@ class ActivityLogModelView(AuthenticatedModelView):
     can_delete = False
     can_edit = False
     column_filters = ('activity_time', 'activity', 'employee_id')
-    page_size = 15
+    page_size = 10
 
 
 class PassbookTypesModelView(AuthenticatedModelView):
@@ -83,7 +106,7 @@ class PassbookTypesModelView(AuthenticatedModelView):
     show_column = 'passbook_type_name', 'minimum_deposit', 'minimum_deposit_date', 'interest_rate', 'apply_date', 'term',
     column_filters = show_column
     form_columns = show_column
-    page_size = 15
+    page_size = 10
 
 
 admin.add_view(PositionModelView(Position, db.session))

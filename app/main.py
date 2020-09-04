@@ -1,5 +1,5 @@
 from app import app, login, decorator, dao
-from flask import render_template, request
+from flask import render_template, request, jsonify
 from flask_login import login_user, logout_user
 import hashlib
 from datetime import datetime
@@ -14,6 +14,7 @@ def index():
 @app.route("/login-employee", methods=["post", "get"])
 def login_employee():
     msg = ""
+    msg_deactive = ""
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password", "")
@@ -21,20 +22,46 @@ def login_employee():
         emp = Employee.query.filter(Employee.username == username.strip(),
                                     Employee.password == password).first()
         if emp:
-            login_user(user=emp)
-            activity_time = datetime.now()
-            activity = "Đăng nhập"
-            description = ""
-            employee_id = current_user.id
-            if dao.add_activity_log(activity_time=activity_time, activity=activity,
-                                    description=description, employee_id=employee_id):
-                if emp.employee_role == EmployeeRole.ADMIN:
-                    return redirect("/admin")
-                else:
-                    return redirect("/")
+            if emp.active:
+                login_user(user=emp)
+                activity_time = datetime.now()
+                activity = "Đăng nhập"
+                description = ""
+                employee_id = current_user.id
+                if dao.add_activity_log(activity_time=activity_time, activity=activity,
+                                        description=description, employee_id=employee_id):
+                    if emp.employee_role == EmployeeRole.ADMIN:
+                        return redirect("/admin")
+                    else:
+                        return redirect("/")
+            else:
+                msg_deactive = "Tài khoản đã bị vô hiệu hóa"
         else:
             msg = "Sai tên đăng nhập hoặc mật khẩu"
-    return render_template("accounts/login.html", msg=msg)
+    return render_template("accounts/login.html", msg=msg, msg_deactive=msg_deactive)
+
+
+@app.route("/report-password", methods=["post", "get"])
+def report_password():
+    msg_pass = ""
+    err_msg_pass = ""
+    msg = "Sai tên đăng nhập hoặc mật khẩu"
+    if request.method == "POST":
+        username = request.form.get("username")
+        emp = Employee.query.filter(Employee.username == username.strip()).first()
+        if emp:
+            dao.set_employee_status(emp.id)
+            msg_pass = "Vô hiệu hóa tài khoản thành công"
+
+            activity_time = datetime.now()
+            activity = "Báo quên mật khẩu"
+            description = "Yêu cầu quản trị viên đặt lại mật khẩu mặc định"
+            employee_id = emp.id
+            dao.add_activity_log(activity_time=activity_time, activity=activity,
+                                    description=description, employee_id=employee_id)
+        else:
+            err_msg_pass = "Tài khoản không tồn tại"
+    return render_template("accounts/login.html", msg_pass=msg_pass, err_msg_pass=err_msg_pass, msg=msg)
 
 
 @app.route("/logout-employee")
@@ -49,7 +76,22 @@ def logout_employee():
     return redirect(url_for("index"))
 
 
+@app.route("/api/logout-employee-auto/<int:employee_id>", methods=["post"])
+def logout_employee_auto(employee_id):
+    activity_time = datetime.now()
+    activity = "Đăng xuất tự động"
+    description = "Nhân viên không có hoạt động"
+    employee_id = current_user.id
+    if dao.add_activity_log(activity_time=activity_time, activity=activity,
+                            description=description, employee_id=employee_id):
+        logout_user()
+        return jsonify({"status": 200})
+
+    return jsonify({"status": 500, "error_message": "Something Wrong!!!"})
+
+
 @app.route("/setting-employee", methods=["get", "post"])
+@decorator.login_required
 def setting_employee():
     msg_info = ""
     msg_pass = ""

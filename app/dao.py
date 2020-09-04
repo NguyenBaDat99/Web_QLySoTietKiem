@@ -29,6 +29,14 @@ def change_employee_pass(employee_id, password):
     db.session.commit()
 
 
+def set_employee_status(employee_id):
+    employee = Employee.query.get(employee_id)
+
+    employee.active = False
+
+    db.session.add(employee)
+    db.session.commit()
+
 def get_passbook_list(passbook_id):
     passbooks = Passbook.query
 
