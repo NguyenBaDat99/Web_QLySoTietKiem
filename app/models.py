@@ -47,7 +47,8 @@ class Employee(db.Model, UserMixin):
     id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String(50), nullable=False)
     password = Column(String(255), nullable=False,
-                      default="6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b")
+                      default="4dff4ea340f0a823f15d3f4f01ab62eae0e5da579ccb851f8db9dfe84c58b2b37b"
+                              "89903a740e1ee172da793a6e79d560e5f7f9bd058a12a280433ed6fa46510a")
     name = Column(String(50), nullable=False)
     gender = Column(Enum(Gender), nullable=True)
     date_of_birth = Column(Date, nullable=True)

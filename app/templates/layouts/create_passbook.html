@@ -139,17 +139,11 @@
     </div>
 </div>
 
+{% endblock content %}
+
+{% block javascripts %}
+
 <script type="text/javascript">
-      function init(){
-        let d = new Date();
-        document.getElementById("openDate").value = `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
-
-
-        if("{{ msg_pass }}" != "" || "{{ err_msg_pass }}" != "" ){
-            $('#changePasswordModal').modal('show')
-        }
-      }
-
       function goBack() {
          if("{{ current_user.employee_role }}" == "EmployeeRole.ADMIN"){
             window.location.href = "/admin";
@@ -159,5 +153,6 @@
       }
 </script>
 
-{% endblock content %}
+{% endblock javascripts %}
+
 

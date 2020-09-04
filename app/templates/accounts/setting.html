@@ -1,5 +1,5 @@
 <br>
-<div class="container" style="max-width: 750px; min-width: 400px">
+<div class="container" style="max-width: 750px; min-width: 500px">
     <div class="row">
         <div class="col-8">
             <h1 class="display-4" style="font-size: 1.8rem;">Sửa thông tin tài khoản</h1>
@@ -116,7 +116,8 @@
         <div class="dropdown-divider"></div>
         <div class="form-group">
             <label>Xác nhận mật khẩu</label>
-            <input type="password" class="form-control" name="passwordConfirm" required>
+            <input type="password" class="form-control" id="passwordIn" onkeyup="trigger_hash()" required>
+            <input type="text" class="form-control" name="passwordConfirm" id="passwordHashed" style="display: none;">
         </div>
         {% if err_msg_info %}
         <div class="alert alert-danger" role="alert">
@@ -133,6 +134,10 @@
         <!--        <button type="submit" class="btn btn-secondary mb-2" >Hủy bỏ</button>-->
     </form>
 </div>
+
+{% block javascripts %}
+<!-- Hash SHA512 -->
+<script type="text/javascript" src="static/assets/js/sha512.js"></script>
 
 <script type="text/javascript">
       const indicator = document.querySelector(".indicator");
@@ -195,12 +200,6 @@
         }
       }
 
-      function init(){
-        if("{{ msg_pass }}" != "" || "{{ err_msg_pass }}" != "" ){
-            $('#changePasswordModal').modal('show')
-        }
-      }
-
       function goBack() {
          if("{{ current_user.employee_role }}" == "EmployeeRole.ADMIN"){
             window.location.href = "/admin";
@@ -208,4 +207,21 @@
             window.location.href = "/";
          }
       }
+
+      const passwordIn = document.getElementById('passwordIn');
+      const passwordHashed = document.getElementById('passwordHashed');
+
+      function hash512(obj) {
+          var hashObj = new jsSHA("SHA-512", "TEXT", {numRounds: 1});
+          hashObj.update(obj);
+          var hash = hashObj.getHash("HEX");
+          return hash;
+        }
+
+      function trigger_hash(){
+        if(passwordIn.value != ""){
+            passwordHashed.value = hash512(passwordIn.value);
+        }
+      }
 </script>
+{% endblock javascripts %}

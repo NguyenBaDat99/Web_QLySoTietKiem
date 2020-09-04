@@ -4,7 +4,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" href="/static/assets/favicon.ico" type="image/x-icon">
+    <!-- Bootstrap (Theme: Lumen) -->
     <link rel="stylesheet" href="static/assets/css/bootstrap.min.css">
+    <!-- Hash SHA512 -->
+    <script type="text/javascript" src="static/assets/js/sha512.js"></script>
+
+<!--    <script src="https://www.google.com/recaptcha/api.js?render=6Ld7xMcZAAAAABig1zPRhiEz0W99_1lQCN9-uYHQ"></script>-->
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
     <!-- Font Awesome JS -->
     <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/solid.js"
             integrity="sha384-tzzSw1/Vo+0N5UhStP3bvwWPq+uvzCMfrN1fEFe+xBmv1C/AtVX5K0uZtmcHitFZ"
@@ -33,22 +40,18 @@
 
 {% include "includes/footer.html" %}
 
-{% endif %}
-<!-- Specific Page JS goes HERE  -->
-{% block javascripts %}
 <script>
     function init() {
-        let time = 3600000;
-        var timeout = 5000;
+        let step = 300000;
+        var timeout = 3600000;
         setInterval(function () {
-            timeout -= 1000
+            timeout -= step
             if (timeout <= 0){
                 logout({{ current_user.id }})
             }
-        }, 1000);
-}
+        }, step);
 
-     function logout(employee_id) {
+        function logout(employee_id) {
                 fetch("/api/logout-employee-auto/" + employee_id, {
                     "method": "post"
                 }).then(res => res.json()).then(res => {
@@ -60,9 +63,32 @@
 
                 })
             }
+
+
+<!--    Scripts setting.html    -->
+        if("{{ msg_pass }}" != "" || "{{ err_msg_pass }}" != "" ){
+           $('#changePasswordModal').modal('show')
+        }
+
+
+<!--    Scripts create_passbook.html    -->
+        let d = new Date();
+        document.getElementById("openDate").value = `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
+
+        if("{{ msg_pass }}" != "" || "{{ err_msg_pass }}" != "" ){
+            $('#changePasswordModal').modal('show')
+        }
+
+    }
 </script>
+
+{% block javascripts %}
+
 {% endblock javascripts %}
 
+{% endif %}
+
+<!-- Specific Page JS goes HERE  -->
 
 <!-- jQuery CDN - Slim version (=without AJAX) -->
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"

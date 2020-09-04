@@ -1,5 +1,5 @@
 from app import app, login, decorator, dao
-from flask import render_template, request, jsonify
+from flask import render_template, request, jsonify, session
 from flask_login import login_user, logout_user
 import hashlib
 from datetime import datetime
@@ -15,30 +15,45 @@ def index():
 def login_employee():
     msg = ""
     msg_deactive = ""
+    try_login = 0
+
+    if 'try_login' in session and session['try_login']:
+        try_login = session['try_login']
+    else:
+        session['try_login'] = 0
+
     if request.method == "POST":
         username = request.form.get("username")
+        # password = request.form.get("password", "")
+        # password = hashlib.sha512(password.strip().encode("utf-8")).hexdigest()
         password = request.form.get("password", "")
-        password = hashlib.sha256(password.strip().encode("utf-8")).hexdigest()
-        emp = Employee.query.filter(Employee.username == username.strip(),
-                                    Employee.password == password).first()
-        if emp:
-            if emp.active:
-                login_user(user=emp)
-                activity_time = datetime.now()
-                activity = "Đăng nhập"
-                description = ""
-                employee_id = current_user.id
-                if dao.add_activity_log(activity_time=activity_time, activity=activity,
-                                        description=description, employee_id=employee_id):
+        captcha = request.form.get("g-recaptcha-response")
+
+        if captcha or try_login <= 3:
+            emp = Employee.query.filter(Employee.username == username.strip(),
+                                        Employee.password == password).first()
+            if emp:
+                if emp.active:
+                    login_user(user=emp)
+                    session.pop('try_login', None)
+                    activity_time = datetime.now()
+                    activity = "Đăng nhập"
+                    description = ""
+                    employee_id = current_user.id
+                    dao.add_activity_log(activity_time=activity_time, activity=activity,
+                                         description=description, employee_id=employee_id)
                     if emp.employee_role == EmployeeRole.ADMIN:
                         return redirect("/admin")
                     else:
                         return redirect("/")
+                else:
+                    msg_deactive = "Tài khoản đã bị vô hiệu hóa"
             else:
-                msg_deactive = "Tài khoản đã bị vô hiệu hóa"
+                msg = "Sai tên đăng nhập hoặc mật khẩu"
+                session['try_login'] = try_login + 1
         else:
-            msg = "Sai tên đăng nhập hoặc mật khẩu"
-    return render_template("accounts/login.html", msg=msg, msg_deactive=msg_deactive)
+            msg = "Lỗi xác thực captcha"
+    return render_template("accounts/login.html", msg=msg, msg_deactive=msg_deactive, try_login=try_login)
 
 
 @app.route("/report-password", methods=["post", "get"])
@@ -58,7 +73,7 @@ def report_password():
             description = "Yêu cầu quản trị viên đặt lại mật khẩu mặc định"
             employee_id = emp.id
             dao.add_activity_log(activity_time=activity_time, activity=activity,
-                                    description=description, employee_id=employee_id)
+                                 description=description, employee_id=employee_id)
         else:
             err_msg_pass = "Tài khoản không tồn tại"
     return render_template("accounts/login.html", msg_pass=msg_pass, err_msg_pass=err_msg_pass, msg=msg)
@@ -107,8 +122,9 @@ def setting_employee():
             date_of_birth = request.form.get("dateOfBirth")
             phone = request.form.get("phone")
             address = request.form.get("address")
-            password_confirm = hashlib.sha256(request.form.get("passwordConfirm")
-                                              .strip().encode("utf-8")).hexdigest()
+            # password_confirm = hashlib.sha512(request.form.get("passwordConfirm")
+            #                                   .strip().encode("utf-8")).hexdigest()
+            password_confirm = request.form.get("passwordConfirm")
 
             if current_user.password == password_confirm:
                 dao.change_employee_info(current_user.id, name, gender, date_of_birth, phone, address)
@@ -119,11 +135,11 @@ def setting_employee():
                 description = err_msg_info
         if request.form['save'] == 'savePassword':
 
-            new_password = hashlib.sha256(request.form.get("newPassword")
+            new_password = hashlib.sha512(request.form.get("newPassword")
                                           .strip().encode("utf-8")).hexdigest()
-            new_password_confirm = hashlib.sha256(request.form.get("newPasswordConfirm")
+            new_password_confirm = hashlib.sha512(request.form.get("newPasswordConfirm")
                                                   .strip().encode("utf-8")).hexdigest()
-            old_password_confirm = hashlib.sha256(request.form.get("oldPasswordConfirm")
+            old_password_confirm = hashlib.sha512(request.form.get("oldPasswordConfirm")
                                                   .strip().encode("utf-8")).hexdigest()
 
             if new_password == new_password_confirm:

@@ -8,14 +8,22 @@
     <p class="lead" style="color: green">Quản lý sổ tiết kiệm</p>
 </div>
 <div class="container" style="text-align: -webkit-center;">
-    <form class="jumbotron text-center" action="{{ url_for('login_employee')}}" style="width:350px" method="post">
+    <form class="jumbotron text-center" action="" style="width:368px" method="POST"
+          id="login-form">
         <h2 class="display-4" style="font-size: 2.5rem;">Đăng nhập</h2>
         <div class="form-group">
             <input class="form-control" name="username" placeholder="Tên đăng nhập" required>
         </div>
         <div class="form-group">
-            <input type="password" class="form-control" name="password" placeholder="Mật khẩu" required>
+            <input type="password" class="form-control" id="passwordIn" placeholder="Mật khẩu" onkeyup="trigger()"
+                   required>
+            <input type="text" class="form-control" id="passwordHashed" name="password" style="display: none;">
         </div>
+        {% if try_login >= 3 %}
+        <div class="g-recaptcha" data-sitekey="6LejxccZAAAAAHMe7OJDwjsjI6VZGxkToZ12cgMt"></div>
+        <br/>
+        {% endif %}
+
         {% if msg %}
         <div class="alert alert-danger" role="alert">
             {{ msg }}
@@ -29,13 +37,27 @@
         <!--            <div class="checkbox">-->
         <!--                <label><input type="checkbox" name="remember">Nhớ mật khẩu</label>-->
         <!--            </div>-->
-        <input type="submit" name="btnSignIn" class="btn btn-success" value="Đăng nhập">
+        <!--        <button type="submit" name="btnSignIn" class="btn btn-success g-recaptcha" value="Đăng nhập"-->
+        <!--        data-sitekey="6Ld7xMcZAAAAABig1zPRhiEz0W99_1lQCN9-uYHQ"-->
+        <!--        data-callback='onSubmit'-->
+        <!--                data-action='submit'></button>-->
+
+        <!--     reCaptcha v3   -->
+        <!--        <button class="g-recaptcha btn btn-success"-->
+        <!--                data-sitekey="6Ld7xMcZAAAAABig1zPRhiEz0W99_1lQCN9-uYHQ"-->
+        <!--                data-callback='onSubmit'-->
+        <!--                data-action='submit' type="submit">Đăng nhập-->
+
+        <input type="submit" class="btn btn-success" value="Đăng nhập">
+        </button>
+
         {% if msg %}
         <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#forgetPasswordModal">
             Quên mật khẩu
         </button>
         {% endif %}
     </form>
+
 </div>
 
 <!-- Modal -->
@@ -43,13 +65,14 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title" id="exampleModalLabel">Hướng dẫn lấy mật khẩu</h4>
+                <h3 class="modal-title display-4" style="font-size: 1.8rem;" id="exampleModalLabel">Hướng dẫn lấy mật
+                    khẩu</h3>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
-                <p class="lead" style="font-size: 1.3rem">
+                <p class="lead" style="font-size: 1.35rem">
                     <strong>Bước 1</strong>: Nhân viên chắc chắn mình đã quên mật khẩu,
                     vui lòng nhập tên tài khoản để vô hiệu hóa</p>
                 <br>
@@ -74,7 +97,7 @@
                     {% endif %}
                 </form>
                 <br>
-                <p class="lead" style="font-size: 1.3rem">
+                <p class="lead" style="font-size: 1.35rem">
                     <strong>Bước 2</strong>: Nhân viên liên hệ với bộ phận quản lý nhân sự qua SĐT 0933283350
                     để được hướng dẫn lấy lại mật khẩu
                     <br>
@@ -88,15 +111,34 @@
 </div>
 
 <script type="text/javascript">
-      function init(){
+      const passwordIn = document.getElementById('passwordIn');
+      const passwordHashed = document.getElementById('passwordHashed');
+
+      function init() {
         if("{{ msg_pass }}" != "" || "{{ err_msg_pass }}" != "" ){
             $('#forgetPasswordModal').modal('show')
         }
+        trigger();
       }
 
 
+      function hash512(obj) {
+          var hashObj = new jsSHA("SHA-512", "TEXT", {numRounds: 1});
+          hashObj.update(obj);
+          var hash = hashObj.getHash("HEX");
+          return hash;
+        }
 
-
+      function trigger(){
+        if(passwordIn.value != ""){
+            passwordHashed.value = hash512(passwordIn.value);
+        }
+      }
 </script>
 {% endblock content %}
+
+
+
+
+
 
