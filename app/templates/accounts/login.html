@@ -8,7 +8,7 @@
     <p class="lead" style="color: green">Quản lý sổ tiết kiệm</p>
 </div>
 <div class="container" style="text-align: -webkit-center;">
-    <form class="jumbotron text-center" action="" style="width:368px" method="POST"
+    <form class="jumbotron text-center" action="{{ url_for('login_employee') }}" style="width:368px" method="POST"
           id="login-form">
         <h2 class="display-4" style="font-size: 2.5rem;">Đăng nhập</h2>
         <div class="form-group">
@@ -19,9 +19,11 @@
                    required>
             <input type="text" class="form-control" id="passwordHashed" name="password" style="display: none;">
         </div>
-        {% if try_login >= 3 %}
-        <div class="g-recaptcha" data-sitekey="6LejxccZAAAAAHMe7OJDwjsjI6VZGxkToZ12cgMt"></div>
-        <br/>
+        {% if try_login %}
+            {% if try_login >= 3 %}
+            <div class="g-recaptcha" data-sitekey="6LejxccZAAAAAHMe7OJDwjsjI6VZGxkToZ12cgMt"></div>
+            <br/>
+            {% endif %}
         {% endif %}
 
         {% if msg %}
