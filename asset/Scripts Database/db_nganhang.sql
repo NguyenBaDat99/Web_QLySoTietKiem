@@ -33,7 +33,7 @@ CREATE TABLE `activity_log` (
   PRIMARY KEY (`id`),
   KEY `employee_id` (`employee_id`),
   CONSTRAINT `activity_log_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employee` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=236 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -42,7 +42,7 @@ CREATE TABLE `activity_log` (
 
 LOCK TABLES `activity_log` WRITE;
 /*!40000 ALTER TABLE `activity_log` DISABLE KEYS */;
-INSERT INTO `activity_log` VALUES (1,1,'2020-09-03 09:08:29','Đăng nhập',''),(2,1,'2020-09-03 09:08:50','Đăng xuất',''),(3,1,'2020-09-03 16:11:06','Đăng nhập',''),(4,1,'2020-09-03 16:11:23','Đăng xuất',''),(5,1,'2020-09-03 16:11:34','Đăng nhập',''),(6,1,'2020-09-03 16:22:25','Sửa thông tin tài khoản',''),(7,1,'2020-09-03 16:22:31','Sửa thông tin tài khoản','Cập nhật thông tin tài khoản thành công'),(8,1,'2020-09-03 16:23:35','Sửa thông tin tài khoản','Mật khẩu không chính xác'),(9,2,'2020-09-03 16:24:21','Đăng nhập',''),(10,2,'2020-09-03 16:24:31','Sửa thông tin tài khoản','Mật khẩu mới không khớp'),(11,2,'2020-09-03 16:24:38','Sửa thông tin tài khoản','Mật khẩu không chính xác'),(12,2,'2020-09-03 16:24:42','Đăng xuất',''),(13,1,'2020-09-03 16:24:44','Đăng nhập',''),(14,1,'2020-09-03 16:33:01','Đăng nhập',''),(15,2,'2020-09-03 16:36:59','Đăng nhập',''),(16,2,'2020-09-03 17:04:28','Đăng xuất',''),(17,1,'2020-09-03 17:04:31','Đăng nhập',''),(18,1,'2020-09-03 17:05:27','Đăng nhập',''),(19,2,'2020-09-03 17:06:09','Đăng nhập',''),(20,2,'2020-09-03 21:06:02','Đăng nhập',''),(21,2,'2020-09-03 21:08:44','Đăng xuất',''),(22,1,'2020-09-03 21:08:46','Đăng nhập',''),(23,1,'2020-09-03 21:11:00','Đăng xuất',''),(24,2,'2020-09-03 21:11:15','Đăng nhập',''),(25,2,'2020-09-03 21:18:22','Sửa thông tin tài khoản','Đổi mật khẩu thành công'),(26,2,'2020-09-03 21:18:28','Đăng xuất',''),(27,1,'2020-09-03 21:18:31','Đăng nhập',''),(28,1,'2020-09-03 21:19:43','Sửa thông tin tài khoản','Mật khẩu cũ không chính xác'),(29,1,'2020-09-03 21:19:48','Sửa thông tin tài khoản','Đổi mật khẩu thành công'),(30,2,'2020-09-03 21:20:26','Đăng nhập',''),(31,2,'2020-09-03 22:22:54','Đăng xuất','');
+INSERT INTO `activity_log` VALUES (224,2,'2020-09-06 14:50:37','Đăng nhập',''),(225,2,'2020-09-06 14:50:39','Đăng xuất',''),(226,2,'2020-09-06 14:54:02','Đăng nhập',''),(227,2,'2020-09-06 14:54:04','Đăng xuất',''),(228,2,'2020-09-08 14:57:08','Đăng nhập',''),(229,2,'2020-09-08 16:11:46','Đăng nhập',''),(230,2,'2020-09-08 16:13:04','Đăng nhập',''),(231,2,'2020-09-08 17:45:53','Đăng xuất',''),(232,2,'2020-09-08 17:45:55','Đăng nhập',''),(233,2,'2020-09-08 17:50:41','Đăng xuất',''),(234,2,'2020-09-08 17:50:43','Đăng nhập',''),(235,2,'2020-09-09 15:28:56','Đăng nhập','');
 /*!40000 ALTER TABLE `activity_log` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -57,12 +57,9 @@ CREATE TABLE `customer` (
   `id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL,
   `identity_card_number` int NOT NULL,
-  `gender` enum('MALE','FEMALE','OTHER') DEFAULT NULL,
-  `date_of_birth` date DEFAULT NULL,
   `phone` varchar(30) DEFAULT NULL,
-  `address` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -71,6 +68,7 @@ CREATE TABLE `customer` (
 
 LOCK TABLES `customer` WRITE;
 /*!40000 ALTER TABLE `customer` DISABLE KEYS */;
+INSERT INTO `customer` VALUES (18,'23432',2324,NULL),(20,'Bá Đạt',134,'0938622780'),(21,'ádsad',23232,NULL),(22,'Tường Vân',21154,'0938622780'),(23,'cxv3',121,'0938622780'),(24,'dvvfyh',12124124,'09386223'),(25,'r4',147,NULL),(26,'12dddxxx',232,NULL);
 /*!40000 ALTER TABLE `customer` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -107,7 +105,7 @@ CREATE TABLE `employee` (
 
 LOCK TABLES `employee` WRITE;
 /*!40000 ALTER TABLE `employee` DISABLE KEYS */;
-INSERT INTO `employee` VALUES (1,'admin1','26c749aae4e749de56d43c872cf9ec0ebcbf9040853431b08bc134e713fe26e1','Quản trị viên - 1','MALE',NULL,'',NULL,1,'ADMIN',NULL,NULL),(2,'nbdat22','46f4eda71b571aecedc1a623533c7abe7cfbf7bfae8d5ec694eb6cb6fd7eadd9','Bá Đạt','MALE','1999-07-31','0938622780','',1,'EMPLOYEE','2020-08-28',1);
+INSERT INTO `employee` VALUES (1,'admin1','58b5444cf1b6253a4317fe12daff411a78bda0a95279b1d5768ebf5ca60829e78da944e8a9160a0b6d428cb213e813525a72650dac67b88879394ff624da482f','Quản trị viên - 1','MALE',NULL,'',NULL,1,'ADMIN',NULL,NULL),(2,'nbdat22','89ad306e53aad8fdad00390569f5afad21714bad263de72e9f6b70788f6f45a7579debdb2a9c6dc0d05070eccb50b4f48740e54eb228d2eddca237fb0d00ccf9','Bá Đạt','MALE','1999-07-31','0938622780',NULL,1,'EMPLOYEE','2020-08-28',1);
 /*!40000 ALTER TABLE `employee` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -129,7 +127,7 @@ CREATE TABLE `passbook` (
   KEY `passbook_type_id` (`passbook_type_id`),
   CONSTRAINT `passbook_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`id`),
   CONSTRAINT `passbook_ibfk_2` FOREIGN KEY (`passbook_type_id`) REFERENCES `passbook_type` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -138,6 +136,7 @@ CREATE TABLE `passbook` (
 
 LOCK TABLES `passbook` WRITE;
 /*!40000 ALTER TABLE `passbook` DISABLE KEYS */;
+INSERT INTO `passbook` VALUES (1,20,1,'2020-09-09',100000),(2,20,2,'2020-09-09',150000000),(3,20,2,'2020-09-09',60000000);
 /*!40000 ALTER TABLE `passbook` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -238,4 +237,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-09-03 22:23:26
+-- Dump completed on 2020-09-09 16:47:54

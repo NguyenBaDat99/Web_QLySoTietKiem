@@ -3,7 +3,7 @@
 {% block title %}- Tra cứu sổ{% endblock title %}
 
 {% block stylesheets %}
-<link rel="stylesheet" href="static/assets/css/passbook_list.css">
+<link rel="stylesheet" href="static/assets/css/passbook-list.css">
 {% endblock stylesheets %}
 
 {% block content %}
@@ -28,7 +28,7 @@
                     <th scope="row">{{ passbook.id }}</th>
                     <td>{{ passbook.customer_id }}</td>
                     <td>{{ passbook.passbook_type_id }}</td>
-                    <td>{{ passbook.balance_amount }}</td>
+                    <td>{{ "{:,.0f}".format(passbook.balance_amount) }} VNĐ</td>
                     <td>{{ passbook.open_date }}</td>
                     <td>
                         <button class="btn btn-warning">Giao dịch</button>

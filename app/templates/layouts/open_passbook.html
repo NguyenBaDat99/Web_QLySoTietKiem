@@ -1,0 +1,473 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}- Tra cứu sổ{% endblock title %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="static/assets/css/open-passbook.css">
+{% endblock stylesheets %}
+
+{% block content %}
+
+<div class="container-fluid">
+    <div class="row" style="width:100%">
+
+        <!--    Tra cứu   -->
+        <div class="col" id="formSearch">
+            <div class="container" style="max-width: 100%">
+                <h1 class="display-4" style="font-size: 1.8rem;">Tra cứu</h1>
+                <div class="row">
+                    <div class="col">
+                        <nav class="navbar navbar-dark bg-dark">
+                            <a class="navbar-brand">Danh sách khách hàng</a>
+                            <form class="form-inline" method="post">
+                                &emsp;
+                                <input class="form-control mr-sm-2" name="ttTimKiem" type="search"
+                                       placeholder="Nhập thông tin"
+                                       aria-label="Search" required maxlength="20">
+                                <input class="btn btn-outline-light" value="Tìm kiếm">
+                            </form>
+                        </nav>
+                        <table class="table">
+                            <thead class="thead-light">
+                            <tr>
+                                <th scope="col">ID</th>
+                                <th scope="col">Số CMND</th>
+                                <th scope="col">Họ tên</th>
+                                <th scope="col">SĐT</th>
+                                <th scope="col">Thao tác</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for customer in customers %}
+                            <tr>
+                                <th scope="row">{{ customer.id }}</th>
+                                <td>{{ customer.identity_card_number }}</td>
+                                <td>{{ customer.name }}</td>
+                                <td>{{ customer.phone }}</td>
+                                <td>
+                                    <button type="button" class="btn btn-primary"
+                                            onclick="chooseCustomer({{ customer.id }})">Chọn
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!--    Thông tin khách hàng    -->
+        <div class="col" id="formCustomer">
+            <div class="container">
+                <div class="row">
+                    <h1 class="display-4" style="font-size: 1.8rem;">Thông tin khách hàng</h1>
+                </div>
+
+                <div class="dropdown-divider"></div>
+                <form method="post" action="">
+                    <div class="form-group">
+                        <label>Số chứng minh nhân dân</label>
+                        <input type="number" class="form-control" id="identityNumber">
+                    </div>
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-8">
+                                <label>Họ tên</label>
+                                <input type="text" class="form-control" id="name">
+                            </div>
+                            <div class="col-4">
+                                <label>Số điện thoại</label>
+                                <input type="number" class="form-control" value="" id="phone">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-danger" role="alert" id="msgCustomer" style="display: none;">
+
+                    </div>
+                    <a class="btn btn-primary" id="btnCreateAndContinue" onclick="createCustomer()" role="button">
+                        Tạo mới và tiếp tục
+                    </a>
+                    <a class="btn btn-primary" id="btnContinue" onclick="goPassbook()" style="display: none" role="button">
+                        Tiếp tục
+                    </a>
+                    <a class="btn btn-warning" id="btnUpdateCustomer" onclick="updateCustomer()" style="display: none" role="button">
+                        Cập nhật thông tin
+                    </a>
+                    <a class="btn btn-secondary" id="btnBack" onclick="cancel()" style="display: none" role="button">
+                        Hủy
+                    </a>
+
+                </form>
+            </div>
+            <div class="container" id="formCustomerPassbookTable" >
+                <nav class="navbar navbar-dark bg-dark">
+                            <a class="navbar-brand">Danh sách sổ tiết kiệm</a>
+                            <a class="navbar-brand" id="customerTableName"></a>
+                        </nav>
+                <table class="table">
+                    <thead class="thead-light">
+                    <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">Khách hàng</th>
+                        <th scope="col">Loại sổ tiết kiệm</th>
+                        <th scope="col">Số dư</th>
+                        <th scope="col">Ngày mở sổ</th>
+                        <th scope="col">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody id="customerTablePassbook">
+
+                    </tbody>
+                </table>
+                <div class="dropdown-divider"></div>
+            </div>
+        </div>
+
+        <!--    Thông tin sổ tiết kiệm    -->
+        <div class="col" style="display: none" id="formPassbook">
+            <div class="container" style="max-width: 750px; min-width: 350px">
+                <div class="row">
+                    <h1 class="display-4" style="font-size: 1.8rem;">Thông tin sổ tiết kiệm</h1>
+                </div>
+                <div class="dropdown-divider"></div>
+                <form method="post" action="">
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-6">
+                                <label>Loại sổ tiết kiệm</label>
+                                <select class="form-control" id="passbookType">
+                                    {% for p in passbook_type%}
+                                    <option value="{{ p.id }}">{{ p.passbook_type_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label>Khách hàng</label>
+                                <div class="row">
+                                    <input type="text" class="form-control" id="passbookId" style="display: none"
+                                           readonly>
+                                    <input type="text" class="form-control" id="customerId" style="display: none"
+                                           readonly>
+                                    <input type="text" class="form-control" id="customerName" readonly>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Số tiền gửi</label>
+                        <input type="number" class="form-control" id="depositAmount">
+                    </div>
+                    <div class="alert alert-danger" role="alert" id="msgPassbook" style="display: none;">
+
+                    </div>
+                    <a class="btn btn-success" id="btnCreatePassbook" onclick="createPassbook()">
+                        Tạo sổ tiết kiệm
+                    </a>
+                    <a class="btn btn-success" id="btnUpdatePassbook" onclick="updatePassbook()">
+                        Mở sổ tiết kiệm
+                    </a>
+                    <a class="btn btn-secondary" onclick="goCustomer()" role="button">Quay lại</a>
+                    <!--        <button type="submit" class="btn btn-secondary mb-2" >Hủy bỏ</button>-->
+                </form>
+            </div>
+        </div>
+
+        <!--     Hoàn tất   -->
+        <div class="col" style="display: none" id="formFinish">
+            <div class="container" style="max-width: 750px; min-width: 200px">
+                <div class="row">
+                    <h1 class="display-4" style="font-size: 1.8rem;">Hoàn tất</h1>
+                </div>
+                <div class="dropdown-divider"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+    function cancel() {
+        window.location.href = "/open-passbook";
+      }
+
+      const formCustomer = document.getElementById('formCustomer');
+      const formSearch = document.getElementById('formSearch');
+      const formPassbook = document.getElementById('formPassbook');
+      const formFinish = document.getElementById('formFinish');
+      const formCustomerPassbookTable = document.getElementById('formCustomerPassbookTable');
+
+      const msgCustomer = document.getElementById('msgCustomer');
+      const msgPassbook = document.getElementById('msgPassbook');
+
+      const btnCreateAndContinue = document.getElementById('btnCreateAndContinue');
+      const btnContinue = document.getElementById('btnContinue');
+      const btnUpdateCustomer = document.getElementById('btnUpdateCustomer');
+      const btnBack = document.getElementById('btnBack');
+
+      const btnCreatePassbook = document.getElementById('btnCreatePassbook');
+      const btnUpdatePassbook = document.getElementById('btnUpdatePassbook');
+
+<!--  Customer information  -->
+      const identityNumber = document.getElementById('identityNumber');
+      const name = document.getElementById('name');
+      const phone = document.getElementById('phone');
+
+<!--  Customer passbook list  -->
+      const customerTableName = document.getElementById('customerTableName');
+      const customerTablePassbook = document.getElementById('customerTablePassbook');
+
+
+<!--  Passbook information  -->
+      const passbookType = document.getElementById('passbookType');
+      const customerId = document.getElementById('customerId');
+      const customerName = document.getElementById('customerName');
+      const depositAmount = document.getElementById('depositAmount');
+      const passbookId = document.getElementById('passbookId');
+
+
+      function goPassbook() {
+        formCustomer.style = "pointer-events: none; opacity: 0.7;";
+        formSearch.style = "display: none";
+        formPassbook.style = "";
+        formCustomerPassbookTable.style = "display: none";
+        msgCustomer.style = "display: none";
+
+        btnCreatePassbook.style = "";
+        btnUpdatePassbook.style = "display: none";
+      }
+
+      function goPassbookOld(passbook_id) {
+        formCustomer.style = "pointer-events: none; opacity: 0.7;";
+        formSearch.style = "display: none";
+        formPassbook.style = "";
+        formCustomerPassbookTable.style = "display: none";
+        msgCustomer.style = "display: none";
+
+        passbookId.value = passbook_id;
+        btnCreatePassbook.style = "display: none";
+        btnUpdatePassbook.style = "";
+      }
+
+      function goCustomer() {
+        formCustomer.style = "";
+        formSearch.style = "";
+        formPassbook.style = "display: none";
+        formCustomerPassbookTable.style = "";
+      }
+
+      function goFinish() {
+        formPassbook.style = "pointer-events: none; opacity: 0.7;";
+        formFinish.style = "";
+        msgPassbook.style = "display: none";
+      }
+
+      function numberWithCommas(x) {
+        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      }
+
+
+      function chooseCustomer(customer_id) {
+        fetch("/api/find-customer", {
+                body: JSON.stringify({
+                    "customer_id": customer_id
+                }),
+                method: "post",
+                headers: {"Content-Type": "application/json"}
+            }).then(res => res.json()).then(data => {
+                console.log(data);
+
+                identityNumber.value = data.customers[0].identity_card_number;
+                name.value = data.customers[0].name;
+                phone.value = data.customers[0].phone;
+
+                customerId.value = data.customers[0].id;
+                customerName.value = data.customers[0].name;
+
+                identityNumber.readOnly = true;
+                name.readOnly = true;
+
+                btnCreateAndContinue.style = "display: none";
+                btnContinue.style = "";
+                btnUpdateCustomer.style = "";
+                btnBack.style = "";
+
+                customerTableName.innerText = `Khách hàng: ${data.customers[0].name}`;
+                fetch("/api/find-passbook", {
+                  body: JSON.stringify({
+                    "customer_id": data.customers[0].id
+                  }),
+                  method: "post",
+                  headers: {"Content-Type": "application/json"}
+                }).then(res => res.json()).then(data => {
+                    customerTablePassbook.innerHTML = '';
+                    data.passbooks.forEach(passbook => {
+                        let date = new Date(passbook.open_date);
+                        let amount = numberWithCommas(passbook.balance_amount);
+
+                        if (passbook.balance_amount == 0){
+                            customerTablePassbook.innerHTML +=
+                            `<tr>
+                            <th scope="row">${passbook.id}</th>
+                            <td>${passbook.customer_id}</td>
+                            <td>${passbook.passbook_type_id}</td>
+                            <td>${amount} VNĐ</td>
+                            <td>${date.toLocaleDateString()}</td>
+                            <td>
+                                <button class="btn btn-primary" onClick="goPassbookOld(${passbook.id})">Mở sổ</button>
+                            </td>
+                            </tr>`;
+                        } else {
+                            customerTablePassbook.innerHTML +=
+                            `<tr>
+                            <th scope="row">${passbook.id}</th>
+                            <td>${passbook.customer_id}</td>
+                            <td>${passbook.passbook_type_id}</td>
+                            <td>${amount} VNĐ</td>
+                            <td>${date.toLocaleDateString()}</td>
+                            <td>
+                                <button class="btn btn-warning">Giao dịch</button>
+                            </td>
+                            </tr>`;
+                        }
+
+                    })
+                })
+            })
+      }
+
+      function createCustomer() {
+        if (identityNumber.value != "" && name.value != "") {
+            fetch("/api/find-customer", {
+                body: JSON.stringify({
+                    "identity_number": identityNumber.value
+                }),
+                method: "post",
+                headers: {"Content-Type": "application/json"}
+            }).then(res => res.json()).then(data => {
+                console.log(data)
+                if (data.customers[0]){
+                    msgCustomer.style = "";
+                    msgCustomer.innerText = "Khách hàng đã tồn tại"
+                } else {
+                    fetch("/api/create-customer", {
+                        body: JSON.stringify({
+                            "name": name.value,
+                            "identity_card_number": identityNumber.value,
+                            "phone": phone.value
+                        }),
+                        method: "post",
+                        headers: {"Content-Type": "application/json"}
+                    }).then(res => res.json()).then(data => {
+                        if (data.status == 200){
+                            customerId.value = data.id;
+                            customerName.value =  data.name;
+                            goPassbook();
+                        } else {
+                            msgCustomer.style = "";
+                            msgCustomer.innerText = data.error
+                        }
+                    })
+                }
+            })
+        } else {
+            msgCustomer.style = "";
+            msgCustomer.innerText = "Thiếu thông tin số CMND hoặc tên khách hàng"
+        }
+      }
+
+      function updateCustomer() {
+        fetch("/api/update-customer", {
+            body: JSON.stringify({
+                "customer_id": customerId.value,
+                "phone": phone.value
+            }),
+            method: "post",
+            headers: {"Content-Type": "application/json"}
+        }).then(res => res.json()).then(data => {
+            console.log(data);
+            alert("Cập nhật thông tin khách hàng thành công");
+        })
+      }
+
+      function createPassbook() {
+        if (passbookType.value != "" && depositAmount.value != ""){
+            fetch("/api/find-passbook-type", {
+                body: JSON.stringify({
+                    "passbook_type_id": passbookType.value
+                }),
+                method: "post",
+                headers: {"Content-Type": "application/json"}
+            }).then(res => res.json()).then(data => {
+                console.log(data)
+                if (data.passbook_types[0].minimum_deposit <= depositAmount.value) {
+                    fetch("/api/create-passbook", {
+                        body: JSON.stringify({
+                            "customer_id": customerId.value,
+                            "passbook_type_id": passbookType.value,
+                            "balance_amount": depositAmount.value
+                        }),
+                        method: "post",
+                        headers: {"Content-Type": "application/json"}
+                    }).then(res => res.json()).then(data => {
+                        console.log(data)
+                        goFinish();
+                    })
+                } else {
+                    msgPassbook.style = "";
+                    msgPassbook.innerText = `Số tiền gửi phải lớn hơn ${data.passbook_types[0].minimum_deposit} VNĐ`;
+                }
+            })
+        }else {
+            msgPassbook.style = "";
+            msgPassbook.innerText = "Vui lòng nhập đầy đủ thông tin"
+        }
+      }
+
+      function updatePassbook() {
+        if (passbookType.value != "" && depositAmount.value != ""){
+            fetch("/api/find-passbook-type", {
+                body: JSON.stringify({
+                    "passbook_type_id": passbookType.value
+                }),
+                method: "post",
+                headers: {"Content-Type": "application/json"}
+            }).then(res => res.json()).then(data => {
+                console.log(data)
+                if (data.passbook_types[0].minimum_deposit <= depositAmount.value) {
+                    fetch("/api/update-passbook", {
+                        body: JSON.stringify({
+                            "passbook_id": passbookId.value,
+                            "passbook_type_id": passbookType.value,
+                            "balance_amount": depositAmount.value
+                        }),
+                        method: "post",
+                        headers: {"Content-Type": "application/json"}
+                    }).then(res => res.json()).then(data => {
+                        console.log(data)
+                        goFinish();
+                    })
+                } else {
+                    msgPassbook.style = "";
+                    msgPassbook.innerText = `Số tiền gửi phải lớn hơn ${data.passbook_types[0].minimum_deposit} VNĐ`;
+                }
+            })
+        }else {
+            msgPassbook.style = "";
+            msgPassbook.innerText = "Vui lòng nhập đầy đủ thông tin"
+        }
+      }
+
+
+
+
+</script>
+
+
+{% endblock javascripts %}
+
+

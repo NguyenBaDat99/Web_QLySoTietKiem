@@ -2,6 +2,8 @@ from app import app, login, decorator, dao
 from flask import render_template, request, jsonify, session
 from flask_login import login_user, logout_user
 import hashlib
+import json
+
 from datetime import datetime
 
 
@@ -172,6 +174,7 @@ def setting_employee():
 
 
 @app.route("/passbook-list", methods=["get", "post"])
+@decorator.login_required_user
 def passbook_list():
     passbook_id = None
     customer_id = None
@@ -181,11 +184,127 @@ def passbook_list():
     return render_template("layouts/passbook_list.html", passbooks=passbooks)
 
 
-@app.route("/create-passbook", methods=["get", "post"])
-def create_passbook():
+@app.route("/open-passbook", methods=["get", "post"])
+@decorator.login_required_user
+def open_passbook():
     if request.method == "POST":
         pass
-    return render_template("layouts/create_passbook.html")
+    return render_template("layouts/open_passbook.html",
+                           customers=dao.find_customer(),
+                           passbook_type=dao.get_passbook_type())
+
+
+@app.route("/api/create-passbook", methods=["post"])
+@decorator.login_required_user
+def create_passbook():
+    try:
+        data = json.loads(request.data)
+        customer_id = data.get('customer_id')
+        passbook_type_id = data.get('passbook_type_id')
+        balance_amount = data.get('balance_amount')
+
+        passbook = dao.create_passbook(customer_id=customer_id,
+                                       passbook_type_id=passbook_type_id,
+                                       balance_amount=balance_amount)
+        return jsonify({"status": 200, "passbook": [passbook.dump()]})
+    except Exception as ex:
+        return jsonify({"status": 500, "error": ex})
+
+
+@app.route("/api/update-passbook", methods=["post"])
+@decorator.login_required_user
+def update_passbook():
+    try:
+        data = json.loads(request.data)
+        passbook_id = data.get('passbook_id')
+        passbook_type_id = data.get('passbook_type_id')
+        balance_amount = data.get('balance_amount')
+
+        passbook = dao.update_passbook(passbook_id=passbook_id,
+                                       passbook_type_id=passbook_type_id,
+                                       balance_amount=balance_amount)
+        return jsonify({"status": 200, "passbook": [passbook.dump()]})
+    except Exception as ex:
+        return jsonify({"status": 500, "error": ex})
+
+
+@app.route("/api/create-customer", methods=["post"])
+@decorator.login_required_user
+def create_customer():
+    try:
+        data = json.loads(request.data)
+        name = data.get('name')
+        identity_card_number = data.get('identity_card_number')
+        phone = data.get('phone')
+
+        customer = dao.create_customer(name=name, identity_card_number=identity_card_number, phone=phone)
+        return jsonify({"status": 200, "id": customer.id, "name": customer.name})
+    except Exception as ex:
+        return jsonify({"status": 500, "error": ex})
+
+
+@app.route("/api/update-customer", methods=["post"])
+@decorator.login_required_user
+def update_customer():
+    try:
+        data = json.loads(request.data)
+        customer_id = data.get('customer_id')
+        phone = data.get('phone')
+
+        customer = dao.update_customer(customer_id=customer_id, phone=phone)
+        return jsonify({"status": 200, "customer": customer.dump()})
+    except Exception as ex:
+        return jsonify({"status": 500, "error": ex})
+
+
+@app.route("/api/find-customer", methods=["post"])
+@decorator.login_required_user
+def find_customer():
+    try:
+        data = json.loads(request.data)
+        customer_id = data.get('customer_id')
+        identity_number = data.get('identity_number')
+        name = data.get('name')
+
+        customers = dao.find_customer(customer_id=customer_id, identity_number=identity_number, name=name)
+        return jsonify({"status": 200, "customers": [c.dump() for c in customers]})
+
+    except Exception as ex:
+        return jsonify({"status": 500, "error": ex})
+
+
+@app.route("/api/find-passbook-type", methods=["post"])
+@decorator.login_required_user
+def find_passbook_type():
+    try:
+        data = json.loads(request.data)
+        passbook_type_id = data.get('passbook_type_id')
+
+        passbook_types = dao.get_passbook_type(passbook_type_id=passbook_type_id)
+        return jsonify({"status": 200, "passbook_types": [passbook_type.dump() for passbook_type in passbook_types]})
+
+    except Exception as ex:
+        return jsonify({"status": 500, "error": ex})
+
+
+@app.route("/api/find-passbook", methods=["post"])
+@decorator.login_required_user
+def find_passbook():
+    try:
+        data = json.loads(request.data)
+        passbook_id = data.get('passbook_id')
+        customer_id = data.get('customer_id')
+        passbook_type_id = data.get('passbook_type_id')
+        open_date = data.get('open_date')
+
+        passbooks = dao.get_passbook_list(passbook_id=passbook_id,
+                                          customer_id=customer_id,
+                                          passbook_type_id=passbook_type_id,
+                                          open_date=open_date)
+        return jsonify({"status": 200, "passbooks": [passbook.dump() for passbook in passbooks]})
+
+    except Exception as ex:
+        return jsonify({"status": 500, "error": ex})
 
 
 @login.user_loader

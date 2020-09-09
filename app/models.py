@@ -84,15 +84,18 @@ class Customer(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(50), nullable=False)
     identity_card_number = Column(Integer, nullable=False)
-    gender = Column(Enum(Gender), nullable=True)
-    date_of_birth = Column(Date, nullable=True)
     phone = Column(String(30), nullable=True)
-    address = Column(String(100), nullable=True)
     passbooks = relationship('Passbook', backref='customer', lazy=True)
     transaction_slips = relationship('TransactionSlip', backref='customer', lazy=True)
 
     def __str__(self):
         return self.name
+
+    def dump(self):
+        return {'id': self.id,
+                'name': self.name,
+                'identity_card_number': self.identity_card_number,
+                'phone': self.phone, }
 
 
 class PassbookTypes(db.Model):
@@ -110,6 +113,15 @@ class PassbookTypes(db.Model):
     def __str__(self):
         return self.passbook_type_name
 
+    def dump(self):
+        return {'id': self.id,
+                'passbook_type_name': self.passbook_type_name,
+                'minimum_deposit': self.minimum_deposit,
+                'minimum_deposit_date': self.minimum_deposit_date,
+                'interest_rate': self.interest_rate,
+                'apply_date': self.apply_date,
+                'term': self.term}
+
 
 class Passbook(db.Model):
     __tablename__ = "passbook"
@@ -123,6 +135,13 @@ class Passbook(db.Model):
 
     def __str__(self):
         return self.id
+
+    def dump(self):
+        return {'id': self.id,
+                'customer_id': self.customer_id,
+                'passbook_type_id': self.passbook_type_id,
+                'open_date': self.open_date,
+                'balance_amount': self.balance_amount}
 
 
 class TransactionSlip(db.Model):
