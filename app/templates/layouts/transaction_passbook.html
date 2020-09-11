@@ -1,0 +1,575 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}- Giao dịch{% endblock title %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="{{ url_for('static', filename='assets/css/transaction-passbook.css') }}">
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row" style="width:100%">
+
+        <!--    Thông tin sổ cần giao dịch    -->
+        <div class="col" id="formPassbook" style="max-width: 550px">
+            <div class="container">
+                <div class="row">
+                    <h1 class="display-4" style="font-size: 1.8rem;">Thông tin sổ tiết kiệm</h1>
+                </div>
+
+                <div class="dropdown-divider"></div>
+                {% if passbook %}
+                <dl class="row">
+                    <dt class="col-sm-4">Mã sổ:</dt>
+                    <dd class="col-sm-8">
+                        <input type="text" class="form-control" id="passbookId" value="{{ passbook.id }}" readonly/>
+                    </dd>
+
+                    <dt class="col-sm-4">Loại sổ:</dt>
+                    <dd class="col-sm-8">
+                        <a class="btn btn-light"
+                           data-toggle="collapse"
+                           href="#collapsePassbookType"
+                           aria-expanded="false"
+                           aria-controls="collapsePassbookType">
+                            {{ passbook_type.passbook_type_name }}
+                        </a>
+                    </dd>
+
+                    <dt class="col-sm-4">Khách hàng:</dt>
+                    <dd class="col-sm-8">{{ customer.name }}</dd>
+
+                    <dt class="col-sm-4">Số dư:</dt>
+                    <dd class="col-sm-8">{{ "{:,.0f}".format(passbook.balance_amount) }} VNĐ</dd>
+
+                    <dt class="col-sm-4">Ngày mở sổ:</dt>
+                    <dd class="col-sm-8">{{ passbook.open_date }}</dd>
+
+
+                    <div class="collapse" id="collapsePassbookType">
+                        <dl class="row" style="margin-left: 0px;">
+                            <dt class="col-sm-4">Ngày gửi tối thiểu:</dt>
+                            <dd class="col-sm-8">{{ passbook_type.minimum_deposit_date }} Ngày</dd>
+
+                            <dt class="col-sm-4">Lãi suất:</dt>
+                            <dd class="col-sm-8">{{ "{:,.4f}".format(passbook_type.interest_rate * 100) }}%</dd>
+
+                            <dt class="col-sm-4">Kỳ hạn:</dt>
+                            <dd class="col-sm-8">{{ passbook_type.term }} Tháng</dd>
+                        </dl>
+                    </div>
+                </dl>
+
+                {% if passbook_type.term == 0 %}
+                <!--            Sổ có không kỳ hạn    -->
+                <a class="btn btn-success" id="btnDeposit" onclick="goDeposit()" role="button">
+                    Gửi tiền
+                </a>
+                {% if withdraw_date < datenow %}
+                <a class="btn btn-dark" id="btnWithdraw" onclick="goWithdrawNonTerm()" role="button">
+                    Rút tiền
+                </a>
+                {% else %}
+                <a class="btn btn-dark disabled" role="button">
+                    Rút tiền sau ngày {{ withdraw_date }}
+                </a>
+                {% endif %}
+
+                {% else %}
+                <!--            Sổ có kỳ hạn    -->
+                {% if maturity_date < datenow %}
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#maturityModal">
+                    Đáo hạn
+                </button>
+                <button type="button" class="btn btn-dark" data-toggle="modal" data-target="#withdrawModal">
+                    Rút tiền
+                </button>
+                <!-- Modal Maturity -->
+                <div class="modal fade" id="maturityModal" tabindex="-1" aria-labelledby="exampleModalLabel"
+                     aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Xác nhận đáo hạn</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <h1 class="display-4" style="font-size: 1.4rem;"> Bạn có chắc đáo hạn sổ:</h1>
+                                <dl class="row">
+                                    <dt class="col-sm-4">Mã sổ:</dt>
+                                    <dd class="col-sm-8">{{ passbook.id }}</dd>
+
+                                    <dt class="col-sm-4">Loại sổ:</dt>
+                                    <dd class="col-sm-8">{{ passbook_type.passbook_type_name }}</dd>
+
+                                    <dt class="col-sm-4">Khách hàng:</dt>
+                                    <dd class="col-sm-8">{{ customer.name }}</dd>
+
+                                    <dt class="col-sm-4">Số dư:</dt>
+                                    <dd class="col-sm-8">{{ "{:,.0f}".format(passbook.balance_amount) }} VNĐ</dd>
+
+                                    <dt class="col-sm-4">Ngày mở sổ:</dt>
+                                    <dd class="col-sm-8">{{ passbook.open_date }}</dd>
+
+                                    <dt class="col-sm-4">Lãi suất:</dt>
+                                    <dd class="col-sm-8">{{ "{:,.4f}".format(passbook_type.interest_rate * 100)
+                                        }}%
+                                    </dd>
+
+                                    <dt class="col-sm-4">Kỳ hạn:</dt>
+                                    <dd class="col-sm-8">{{ passbook_type.term }} Tháng</dd>
+                                </dl>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy bỏ</button>
+                                <button type="button" class="btn btn-warning" data-dismiss="modal"
+                                        onclick="updatePassbookMaturity()">Xác nhận
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Modal Withdraw -->
+                <div class="modal fade" id="withdrawModal" tabindex="-1" aria-labelledby="exampleModalLabel"
+                     aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Xác nhận rút tiền</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <h1 class="display-4" style="font-size: 1.4rem;"> Bạn có chắc rút tiền sổ:</h1>
+                                <dl class="row">
+                                    <dt class="col-sm-4">Mã sổ:</dt>
+                                    <dd class="col-sm-8">{{ passbook.id }}</dd>
+
+                                    <dt class="col-sm-4">Loại sổ:</dt>
+                                    <dd class="col-sm-8">{{ passbook_type.passbook_type_name }}</dd>
+
+                                    <dt class="col-sm-4">Khách hàng:</dt>
+                                    <dd class="col-sm-8">{{ customer.name }}</dd>
+
+                                    <dt class="col-sm-4">Số dư:</dt>
+                                    <dd class="col-sm-8">{{ "{:,.0f}".format(passbook.balance_amount) }} VNĐ</dd>
+
+                                    <dt class="col-sm-4">Ngày mở sổ:</dt>
+                                    <dd class="col-sm-8">{{ passbook.open_date }}</dd>
+
+                                    <dt class="col-sm-4">Lãi suất:</dt>
+                                    <dd class="col-sm-8">{{ "{:,.4f}".format(passbook_type.interest_rate * 100)
+                                        }}%
+                                    </dd>
+
+                                    <dt class="col-sm-4">Kỳ hạn:</dt>
+                                    <dd class="col-sm-8">{{ passbook_type.term }} Tháng</dd>
+
+                                    <dt class="col-sm-4">Số lần đáo hạn:</dt>
+                                    <dd class="col-sm-8">
+                                        {{ maturity_times }}
+                                    </dd>
+
+                                    <dt class="col-sm-4">Tiền lãi:</dt>
+                                    <dd class="col-sm-8">
+                                        {{ "{:,.0f}".format(interest_money)}} VNĐ
+                                    </dd>
+                                </dl>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy bỏ</button>
+                                <button type="button" class="btn btn-warning" data-dismiss="modal"
+                                        onclick="updatePassbookWithdrawTerm()">Xác nhận
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% else %}
+                <a class="btn btn-primary disabled" role="button">
+                    Đáo hạn sau ngày {{ maturity_date }}
+                </a>
+                <a class="btn btn-dark disabled" role="button">
+                    Rút tiền sau ngày {{ maturity_date }}
+                </a>
+                {% endif %}
+
+
+                {% endif %}
+
+                <a class="btn btn-secondary" href="/transaction-passbook/0" role="button">
+                    Hủy
+                </a>
+
+                {% else %}
+                <!--            Nhập mã sổ để kiểm tra      -->
+                <div class="row">
+                    <dt class="col-sm-4">Mã sổ:</dt>
+                    <dd class="col-sm-8">
+                        <input type="number" id="passbookIdConfirm" class="form-control" value=""/>
+                    </dd>
+                    <dt class="col-sm-4"></dt>
+                    <dd class="col-sm-8">
+                        <button class="btn btn-success" onclick="checkPassbookId()">
+                            Xác nhận
+                        </button>
+                    </dd>
+                </div>
+
+                {% if msg %}
+                <div class="row">
+                    <div class="col-9">
+                        <div class="alert alert-danger" role="alert">
+                            {{ msg }}
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <a role="button" class="btn btn-secondary" href="/open-passbook">
+                            Mở sổ
+                        </a>
+                    </div>
+                </div>
+
+                {% endif %}
+
+
+                {% endif %}
+            </div>
+        </div>
+
+        <!--    Phiếu gửi tiền  -->
+        <div class="col" style="display: none" id="formDeposit">
+            <div class="container" style="max-width: 550px; min-width: 450px">
+                <div class="row">
+                    <h1 class="display-4" style="font-size: 1.8rem;">Phiếu gửi tiền</h1>
+                </div>
+                <div class="dropdown-divider"></div>
+                <div class="form-group">
+                    <label>Số tiền gửi</label><i style="color: red">*</i>
+                    <input type="number" class="form-control" id="depositAmount">
+                </div>
+
+                <div class="alert alert-danger" role="alert" id="msgDeposit" style="display: none;"></div>
+
+                <a class="btn btn-warning" id="btnDepositConfirm" onclick="updatePassbookDeposit()" role="button">
+                    Xác nhận
+                </a>
+                <a class="btn btn-secondary" onclick="backPassbook()" role="button">
+                    Hủy bỏ
+                </a>
+            </div>
+        </div>
+
+        <!--    Phiếu rút tiền  -->
+        <div class="col" style="display: none" id="formWithdraw">
+            <div class="container" style="max-width: 750px; min-width: 350px">
+                <div class="row">
+                    <h1 class="display-4" style="font-size: 1.8rem;">Phiếu rút tiền</h1>
+                </div>
+                <div class="dropdown-divider"></div>
+                <div class="form-group">
+                    <label>Số tiền rút</label><i style="color: red">*</i>
+                    <input type="number" class="form-control" id="withdrawAmount">
+                </div>
+
+                <div class="alert alert-danger" role="alert" id="msgWithdraw" style="display: none;"></div>
+
+                <a class="btn btn-warning" onclick="updatePassbookWithdrawNonTerm()" role="button">
+                    Xác nhận
+                </a>
+                <a class="btn btn-secondary" onclick="backPassbook()" role="button">
+                    Hủy bỏ
+                </a>
+            </div>
+        </div>
+
+        <!--     Hoàn tất   -->
+        <div class="col" style="display: none" id="formFinish">
+            <div class="container">
+                <div class="row">
+                    <h1 class="display-4" style="font-size: 1.8rem;">Hoàn tất</h1>
+                </div>
+                <div class="dropdown-divider"></div>
+            </div>
+        </div>
+    </div>
+
+    {% if passbook %}
+    <div class="row" style="width:100%">
+        <!--     Thông tin giao dịch của sổ đã chọn   -->
+        <div class="col">
+            <div class="container">
+                <div class="row">
+                    <h1 class="display-4" style="font-size: 1.8rem;">Thông tin giao dịch</h1>
+                </div>
+
+                <div class="dropdown-divider"></div>
+
+                <dl class="row">
+                    <dt class="col-sm-5">Loại sổ:</dt>
+                    <dd class="col-sm-7">{{ passbook_type.passbook_type_name }}</dd>
+
+                    <dt class="col-sm-5">Số dư:</dt>
+                    <dd class="col-sm-7">{{ "{:,.0f}".format(passbook.balance_amount) }} VNĐ</dd>
+
+                    <dt class="col-sm-5">Lãi suất:</dt>
+                    <dd class="col-sm-7">{{ "{:,.4f}".format(passbook_type.interest_rate * 100) }}%</dd>
+
+                    <dt class="col-sm-5">Ngày mở sổ:</dt>
+                    <dd class="col-sm-7">{{ passbook.open_date.date() }}</dd>
+
+                    <dt class="col-sm-5">Ngày hiện tại:</dt>
+                    <dd class="col-sm-7">{{ datenow }}</dd>
+
+                    {% if passbook_type.term == 0 %}
+
+                    <dt class="col-sm-5">Số tháng hưởng lãi:</dt>
+                    <dd class="col-sm-7">{{ deposit_month }}</dd>
+
+                    <dt class="col-sm-5">Tiền lãi sau khi giao dịch:</dt>
+                    <dd class="col-sm-7">
+                        {{ "{:,.0f}".format(deposit_month * passbook_type.interest_rate * passbook.balance_amount) }}
+                        VNĐ
+                    </dd>
+
+                    <dt class="col-sm-5">Số tiền gửi tối thiểu:</dt>
+                    <dd class="col-sm-7">{{ "{:,.0f}".format(passbook_type.minimum_deposit) }} VNĐ</dd>
+
+                    <dt class="col-sm-5">Số tiền tối đa có thể rút:</dt>
+                    <dd class="col-sm-7">{{ "{:,.0f}".format(passbook.balance_amount) }} VNĐ</dd>
+
+                    <dt class="col-sm-5">Tiền lãi được tính theo công thức:</dt>
+                    <dd class="col-sm-7">Số tháng hưởng lãi * lãi suất * Số dư (Lúc thực hiện giao dịch)</dd>
+
+                    {% else %}
+
+                    <dt class="col-sm-5">Kỳ hạn:</dt>
+                    <dd class="col-sm-7">{{ passbook_type.term }} Tháng</dd>
+
+                    <dt class="col-sm-5">Số lần đáo hạn:</dt>
+                    <dd class="col-sm-7">{{ maturity_times }}</dd>
+
+                    <dt class="col-sm-5">Kết thúc kỳ hạn vào ngày:</dt>
+                    <dd class="col-sm-7">{{ maturity_date }}</dd>
+
+                    <dt class="col-sm-5">Tiền lãi khi rút:</dt>
+                    <dd class="col-sm-7">{{ "{:,.0f}".format(interest_money) }} VNĐ</dd>
+
+                    <dt class="col-sm-5">Tiền lãi được tính theo công thức:</dt>
+                    <dd class="col-sm-7">Số lần đáo hạn * lãi suất * kỳ hạn* Số dư</dd>
+
+                    {% endif %}
+
+                </dl>
+
+
+            </div>
+        </div>
+
+        <!--    Danh sách giao dịch của sổ đã chọn    -->
+        <div class="col-8">
+            <div class="container" id="formPassbookTransactionTable">
+                <nav class="navbar navbar-dark bg-dark">
+                    <a class="navbar-brand">Danh sách giao dịch</a>
+                    <a class="navbar-brand" id="customerTableName">
+                        Mã sổ: {{ passbook.id }}
+                        - Chủ sổ: {{ customer.name }} (CMND: {{ customer.identity_card_number }})
+                    </a>
+                </nav>
+                <div style="height: 380px; overflow: auto;">
+                    <table class="table">
+                        <thead class="thead-light">
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Ngày giờ giao dịch</th>
+                            <th scope="col">Số tiền giao dịch</th>
+                            <th scope="col">Tiền lãi</th>
+                            <th scope="col">Nội dung</th>
+                        </tr>
+                        </thead>
+                        <tbody id="customerTablePassbook">
+                        {% for transaction_slip in transaction_slips %}
+                        <tr>
+                            <th scope="col">{{ transaction_slip.id }}</th>
+                            <td>{{ transaction_slip.transaction_date }}</td>
+                            <th>{{ "{:,.0f}".format(transaction_slip.transaction_amount) }} VNĐ</th>
+                            {% if transaction_slip.interest_amount %}
+                            <td>{{ "{:,.0f}".format(transaction_slip.interest_amount) }} VNĐ</td>
+                            {% else %}
+                            <td>0 VNĐ</td>
+                            {% endif %}
+                            <th>{{ transaction_slip.content }}</th>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    {% endif %}
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+
+    const passbookIdConfirm = document.getElementById('passbookIdConfirm');
+
+    function checkPassbookId() {
+        if (passbookIdConfirm.value) {
+            let obj = passbookIdConfirm.value;
+            let hashObj = new jsSHA("SHA-512", "TEXT", {numRounds: 1});
+            hashObj.update(obj);
+            let hash = hashObj.getHash("HEX");
+
+            window.location.href = "/transaction-passbook/" + hash;
+        } else {
+            alert("Vui lòng nhập mã sổ");
+        }
+    }
+
+    function numberWithCommas(x) {
+        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    const formPassbook = document.getElementById('formPassbook');
+    const formDeposit = document.getElementById('formDeposit');
+    const formWithdraw = document.getElementById('formWithdraw');
+    const formFinish = document.getElementById('formFinish');
+
+    const msgDeposit = document.getElementById('msgDeposit');
+    const msgWithdraw = document.getElementById('msgWithdraw');
+
+    const depositAmount = document.getElementById('depositAmount');
+    const withdrawAmount = document.getElementById('withdrawAmount');
+
+    function backPassbook() {
+        formDeposit.style = "display: none";
+        formWithdraw.style = "display: none";
+        formPassbook.style = "max-width: 550px;";
+        msgDeposit.style = "display: none";
+        msgWithdraw.style = "display: none";
+    }
+
+    function goFinish() {
+        formPassbook.style = "pointer-events: none; opacity: 0.7; max-width: 550px;";
+        formFinish.style = "";
+    }
+
+    function goDeposit() {
+        formPassbook.style = "pointer-events: none; opacity: 0.7; max-width: 550px;";
+        formDeposit.style = "";
+    }
+
+    function goWithdrawNonTerm() {
+        formPassbook.style = "pointer-events: none; opacity: 0.7; max-width: 550px;";
+        formWithdraw.style = "";
+    }
+
+</script>
+
+{% if withdraw_date %}
+<script>
+    function updatePassbookDeposit() {
+        if (depositAmount.value != ""){
+            if ({{ passbook_type.minimum_deposit }} <= depositAmount.value) {
+                fetch("/api/update-passbook-deposit", {
+                    body: JSON.stringify({
+                        "passbook_id": {{ passbook.id }},
+                        "balance_amount": {{ passbook.balance_amount }},
+                        "deposit_amount": depositAmount.value,
+                        "interest_amount": {{ deposit_month * passbook_type.interest_rate * passbook.balance_amount}}
+                    }),
+                    method: "post",
+                    headers: {"Content-Type": "application/json"}
+                }).then(res => res.json()).then(data => {
+                    console.log(data)
+                    formDeposit.style = "pointer-events: none; opacity: 0.7; max-width: 550px;";
+                    goFinish();
+                })
+            } else {
+                msgDeposit.style = "";
+                msgDeposit.innerText = "Số tiền gửi thêm phải lớn hơn " +
+                {{ passbook_type.minimum_deposit }} + " VNĐ";
+            }
+        }else {
+            msgDeposit.style = "";
+            msgDeposit.innerText = "Vui lòng nhập số tiền cần gửi"
+        }
+    }
+
+    function updatePassbookWithdrawNonTerm() {
+        if (withdrawAmount.value != "" && withdrawAmount.value > 0){
+            if ({{ passbook.balance_amount }} >= withdrawAmount.value) {
+                fetch("/api/update-passbook-withdraw", {
+                    body: JSON.stringify({
+                        "passbook_id": {{ passbook.id }},
+                        "balance_amount": {{ passbook.balance_amount }},
+                        "withdraw_amount": withdrawAmount.value,
+                        "interest_amount": {{ deposit_month * passbook_type.interest_rate * passbook.balance_amount}},
+                    }),
+                    method: "post",
+                    headers: {"Content-Type": "application/json"}
+                }).then(res => res.json()).then(data => {
+                    console.log(data)
+                    formWithdraw.style = "pointer-events: none; opacity: 0.7; max-width: 550px;";
+                    goFinish();
+                })
+            } else {
+                msgWithdraw.style = "";
+                msgWithdraw.innerText = "Số tiền rút không được lớn hơn số dư hiện có";
+            }
+        }else {
+            msgWithdraw.style = "";
+            msgWithdraw.innerText = "Vui lòng nhập số tiền rút hợp lệ"
+        }
+    }
+
+</script>
+{% endif %}
+
+{% if maturity_date %}
+<script>
+    function updatePassbookMaturity() {
+        fetch("/api/update-passbook-maturity", {
+            body: JSON.stringify({
+                "passbook_id": {{ passbook.id }},
+            }),
+            method: "post",
+            headers: {"Content-Type": "application/json"}
+            }).then(res => res.json()).then(data => {
+                console.log(data)
+                goFinish();
+                formDeposit.style = "display: none;";
+                formWithdraw.style = "display: none;";
+        })
+    }
+
+    function updatePassbookWithdrawTerm() {
+        fetch("/api/update-passbook-withdraw", {
+            body: JSON.stringify({
+                "passbook_id": {{ passbook.id }},
+                "balance_amount": {{ passbook.balance_amount }},
+                "withdraw_amount": {{ passbook.balance_amount }},
+                "interest_amount": {{ interest_money }},
+            }),
+            method: "post",
+            headers: {"Content-Type": "application/json"}
+            }).then(res => res.json()).then(data => {
+                console.log(data)
+                goFinish();
+                formDeposit.style = "display: none;";
+                formWithdraw.style = "display: none;";
+        })
+    }
+
+</script>
+{% endif %}
+
+{% endblock javascripts %}

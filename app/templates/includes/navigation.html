@@ -6,11 +6,12 @@
         <span class="navbar-toggler-icon"></span>
     </button>
 
-    <div class="collapse navbar-collapse" id="navbarNavDropdown">
-        <ul class="navbar-nav">
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
             <li class="nav-item">
                 <form class="form-inline" action="{{ url_for('passbook_list') }}" method="post">
-                    <input class="form-control mr-sm-2" type="search" placeholder="Mã sổ" aria-label="Search" name="passbookID">
+                    <input class="form-control mr-sm-2" type="search" placeholder="Mã sổ" aria-label="Search"
+                           name="passbookID">
                     <button class="btn btn-light" type="submit">Tra cứu sổ</button>
                 </form>
                 <!--                <a class="nav-link" href="#">Tra cứu sổ</a>-->
@@ -19,22 +20,22 @@
                 <a class="nav-link" href="{{ url_for('open_passbook') }}">Mổ sổ tiết kiệm</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#">Giao dịch</a>
+                <a class="nav-link" href="{{ url_for('transaction_passbook', passbook_id=0) }}">Giao dịch</a>
             </li>
             {% if current_user.position_id == 1 %}
             <li class="nav-item">
-                <a class="nav-link" href="#">Báo cáo</a>
+                <a class="nav-link" href="{{ url_for('report') }}">Báo cáo</a>
             </li>
             {% endif %}
-
         </ul>
     </div>
+
     <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
         <button type="button" class="btn btn-outline-success">
-            {% if current_user.position_id == 2 %}
-            <i class="fas fa-user"></i>
-            {% else %}
+            {% if current_user.position_id == 1 %}
             <i class="fas fa-user-tie"></i>
+            {% else %}
+            <i class="fas fa-user"></i>
             {% endif %}
             &nbsp;
             {{ current_user.name }} - {{ current_user.username }}
@@ -52,24 +53,5 @@
             </div>
         </div>
     </div>
-<!--    <div class="btn-group">-->
-<!--        <button type="button" class="btn btn-outline-success dropdown-toggle"-->
-<!--                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">-->
-<!--            {% if current_user.position_id == 2 %}-->
-<!--            <i class="fas fa-user"></i>-->
-<!--            {% else %}-->
-<!--            <i class="fas fa-user-tie"></i>-->
-<!--            {% endif %}-->
-<!--            {{ current_user.name }} - {{ current_user.username }}-->
-<!--        </button>-->
-<!--        <div class="dropdown-menu dropdown-menu-right"-->
-<!--             style="background-color: white">-->
-<!--            <a class="dropdown-item" href="{{ url_for('setting_employee') }}"><i class="fas fa-user-cog"></i> Tùy chỉnh</a>-->
-<!--            <div class="dropdown-divider"></div>-->
-<!--            <a class="dropdown-item" href="{{ url_for('logout_employee') }}"><i class="fas fa-sign-out-alt"></i> Đăng-->
-<!--                xuất</a>-->
-<!--        </div>-->
-<!--    </div>-->
-
 
 </nav>

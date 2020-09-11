@@ -2,7 +2,7 @@ from sqlalchemy import Column, String, Float, Integer, ForeignKey, Boolean, Date
 from sqlalchemy.orm import relationship
 from app import db
 
-import datetime
+from datetime import datetime
 import enum
 
 from flask_login import UserMixin
@@ -29,6 +29,11 @@ class Gender(enum.Enum):
     FEMALE = 2
     OTHER = 3
 
+class TransactionType(enum.Enum):
+    WITHDRAW = -1
+    MATURITY = 0
+    OPEN_PASSBOOK = 1
+    DEPOSIT = 2
 
 class Position(db.Model):
     __tablename__ = "position"
@@ -56,8 +61,8 @@ class Employee(db.Model, UserMixin):
     address = Column(String(100), nullable=True)
     active = Column(Boolean, nullable=False, default=True)
     employee_role = Column(Enum(EmployeeRole), default=EmployeeRole.EMPLOYEE)
-    start_work_date = Column(Date, nullable=True, default=datetime.datetime.utcnow)
-    position_id = Column(Integer, ForeignKey(Position.id), nullable=True)
+    start_work_date = Column(Date, nullable=True, default=datetime.now())
+    position_id = Column(Integer, ForeignKey(Position.id), nullable=False)
     activity_logs = relationship('ActivityLog', backref='employee', lazy=True)
     transaction_slips = relationship('TransactionSlip', backref='employee', lazy=True)
 
@@ -70,7 +75,7 @@ class ActivityLog(db.Model):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     employee_id = Column(Integer, ForeignKey(Employee.id), nullable=False)
-    activity_time = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
+    activity_time = Column(DateTime, nullable=False, default=datetime.now())
     activity = Column(String(50), nullable=False)
     description = Column(String(300), nullable=True)
 
@@ -106,7 +111,7 @@ class PassbookTypes(db.Model):
     minimum_deposit = Column(Float, nullable=False)
     minimum_deposit_date = Column(Integer, nullable=False)
     interest_rate = Column(Float, nullable=False)
-    apply_date = Column(Date, nullable=False, default=datetime.datetime.utcnow)
+    apply_date = Column(DateTime, nullable=False, default=datetime.now())
     term = Column(Integer, nullable=False)
     passbooks = relationship('Passbook', backref='passbook_type', lazy=True)
 
@@ -129,7 +134,7 @@ class Passbook(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     customer_id = Column(Integer, ForeignKey(Customer.id), nullable=False)
     passbook_type_id = Column(Integer, ForeignKey(PassbookTypes.id), nullable=False)
-    open_date = Column(Date, nullable=False, default=datetime.datetime.utcnow)
+    open_date = Column(DateTime, nullable=False, default=datetime.now())
     balance_amount = Column(Float, nullable=False)
     transaction_slips = relationship('TransactionSlip', backref='passbook', lazy=True)
 
@@ -151,10 +156,22 @@ class TransactionSlip(db.Model):
     passbook_id = Column(Integer, ForeignKey(Passbook.id), nullable=False)
     customer_id = Column(Integer, ForeignKey(Customer.id), nullable=False)
     employee_id = Column(Integer, ForeignKey(Employee.id), nullable=False)
-    transaction_date = Column(Date, nullable=False, default=datetime.datetime.utcnow)
-    transaction_type = Column(String(20), nullable=False)
+    transaction_date = Column(DateTime, nullable=False, default=datetime.now())
+    transaction_type = Column(Enum(TransactionType), nullable=False)
     transaction_amount = Column(Float, nullable=False)
+    interest_amount = Column(Float, nullable=True)
     content = Column(String(300), nullable=False)
+
+    def dump(self):
+        return {'id': self.id,
+                'passbook_id': self.passbook_id,
+                'customer_id': self.customer_id,
+                'employee_id': self.employee_id,
+                'transaction_date': self.transaction_date,
+                # 'transaction_type': self.transaction_type,
+                'transaction_amount': self.transaction_amount,
+                'interest_amount': self.interest_amount,
+                'content': self.content}
 
 
 if __name__ == "__main__":

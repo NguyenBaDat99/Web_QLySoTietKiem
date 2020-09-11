@@ -19,12 +19,9 @@ class AuthenticatedModelView(ModelView):
 
     def inaccessible_callback(self, name, **kwargs):
         # redirect to login page if user doesn't have access
-        activity_time = datetime.now()
-        activity = "Đăng xuất tự động"
-        description = "Nhân viên truy cập vào trang không được phân quyền"
-        employee_id = current_user.id
-        dao.add_activity_log(activity_time=activity_time, activity=activity,
-                             description=description, employee_id=employee_id)
+        dao.add_activity_log(activity="Đăng xuất tự động",
+                             description="Nhân viên truy cập vào trang không được phân quyền",
+                             employee_id=current_user.id)
         logout_user()
         return redirect(url_for('login_employee', next=request.url))
 
@@ -37,12 +34,9 @@ class AuthenticatedBaseView(BaseView):
 
     def inaccessible_callback(self, name, **kwargs):
         # redirect to login page if user doesn't have access
-        activity_time = datetime.now()
-        activity = "Đăng xuất tự động"
-        description = "Nhân viên truy cập vào trang không được phân quyền"
-        employee_id = current_user.id
-        dao.add_activity_log(activity_time=activity_time, activity=activity,
-                             description=description, employee_id=employee_id)
+        dao.add_activity_log(activity="Đăng xuất tự động",
+                             description="Nhân viên truy cập vào trang không được phân quyền",
+                             employee_id=current_user.id)
         logout_user()
         return redirect(url_for('login_employee', next=request.url))
 
@@ -56,12 +50,9 @@ class AboutUsView(AuthenticatedBaseView):
 class LogoutView(BaseView):
     @expose("/")
     def index(self):
-        activity_time = datetime.now()
-        activity = "Đăng xuất"
-        description = ""
-        employee_id = current_user.id
-        dao.add_activity_log(activity_time=activity_time, activity=activity,
-                                description=description, employee_id=employee_id)
+        dao.add_activity_log(activity="Đăng xuất",
+                             description="",
+                             employee_id=current_user.id)
         logout_user()
         return redirect("/")
 

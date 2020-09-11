@@ -1,6 +1,6 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}- Tra cứu sổ{% endblock title %}
+{% block title %}- Mổ sổ tiết kiệm{% endblock title %}
 
 {% block stylesheets %}
 <link rel="stylesheet" href="static/assets/css/open-passbook.css">
@@ -14,7 +14,7 @@
         <!--    Tra cứu   -->
         <div class="col" id="formSearch">
             <div class="container" style="max-width: 100%">
-                <h1 class="display-4" style="font-size: 1.8rem;">Tra cứu</h1>
+<!--                <h1 class="display-4" style="font-size: 1.8rem;">Tra cứu</h1>-->
                 <div class="row">
                     <div class="col">
                         <nav class="navbar navbar-dark bg-dark">
@@ -53,6 +53,7 @@
                             {% endfor %}
                             </tbody>
                         </table>
+                        {{ pagination.links }}
                     </div>
                 </div>
             </div>
@@ -68,13 +69,13 @@
                 <div class="dropdown-divider"></div>
                 <form method="post" action="">
                     <div class="form-group">
-                        <label>Số chứng minh nhân dân</label>
+                        <label>Số chứng minh nhân dân</label><i style="color: red">*</i>
                         <input type="number" class="form-control" id="identityNumber">
                     </div>
                     <div class="form-group">
                         <div class="row">
                             <div class="col-8">
-                                <label>Họ tên</label>
+                                <label>Họ tên</label><i style="color: red">*</i>
                                 <input type="text" class="form-control" id="name">
                             </div>
                             <div class="col-4">
@@ -89,10 +90,12 @@
                     <a class="btn btn-primary" id="btnCreateAndContinue" onclick="createCustomer()" role="button">
                         Tạo mới và tiếp tục
                     </a>
-                    <a class="btn btn-primary" id="btnContinue" onclick="goPassbook()" style="display: none" role="button">
+                    <a class="btn btn-primary" id="btnContinue" onclick="goPassbook()" style="display: none"
+                       role="button">
                         Tiếp tục
                     </a>
-                    <a class="btn btn-warning" id="btnUpdateCustomer" onclick="updateCustomer()" style="display: none" role="button">
+                    <a class="btn btn-warning" id="btnUpdateCustomer" onclick="updateCustomer()" style="display: none"
+                       role="button">
                         Cập nhật thông tin
                     </a>
                     <a class="btn btn-secondary" id="btnBack" onclick="cancel()" style="display: none" role="button">
@@ -101,27 +104,27 @@
 
                 </form>
             </div>
-            <div class="container" id="formCustomerPassbookTable" >
+            <div class="container" id="formCustomerPassbookTable">
                 <nav class="navbar navbar-dark bg-dark">
-                            <a class="navbar-brand">Danh sách sổ tiết kiệm</a>
-                            <a class="navbar-brand" id="customerTableName"></a>
-                        </nav>
-                <table class="table">
-                    <thead class="thead-light">
-                    <tr>
-                        <th scope="col">ID</th>
-                        <th scope="col">Khách hàng</th>
-                        <th scope="col">Loại sổ tiết kiệm</th>
-                        <th scope="col">Số dư</th>
-                        <th scope="col">Ngày mở sổ</th>
-                        <th scope="col">Thao tác</th>
-                    </tr>
-                    </thead>
-                    <tbody id="customerTablePassbook">
+                    <a class="navbar-brand">Danh sách sổ tiết kiệm</a>
+                    <a class="navbar-brand" id="customerTableName"></a>
+                </nav>
+                <div style="height: 400px; overflow: auto;">
+                    <table class="table">
+                        <thead class="thead-light">
+                        <tr>
+                            <th scope="col">ID</th>
+                            <th scope="col">Loại sổ tiết kiệm</th>
+                            <th scope="col">Số dư</th>
+                            <th scope="col">Ngày mở sổ</th>
+                            <th scope="col">Thao tác</th>
+                        </tr>
+                        </thead>
+                        <tbody id="customerTablePassbook">
 
-                    </tbody>
-                </table>
-                <div class="dropdown-divider"></div>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -136,7 +139,7 @@
                     <div class="form-group">
                         <div class="row">
                             <div class="col-6">
-                                <label>Loại sổ tiết kiệm</label>
+                                <label>Loại sổ tiết kiệm</label><i style="color: red">*</i>
                                 <select class="form-control" id="passbookType">
                                     {% for p in passbook_type%}
                                     <option value="{{ p.id }}">{{ p.passbook_type_name }}</option>
@@ -157,7 +160,7 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Số tiền gửi</label>
+                        <label>Số tiền gửi</label><i style="color: red">*</i>
                         <input type="number" class="form-control" id="depositAmount">
                     </div>
                     <div class="alert alert-danger" role="alert" id="msgPassbook" style="display: none;">
@@ -177,7 +180,7 @@
 
         <!--     Hoàn tất   -->
         <div class="col" style="display: none" id="formFinish">
-            <div class="container" style="max-width: 750px; min-width: 200px">
+            <div class="container">
                 <div class="row">
                     <h1 class="display-4" style="font-size: 1.8rem;">Hoàn tất</h1>
                 </div>
@@ -270,7 +273,6 @@
         return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
       }
 
-
       function chooseCustomer(customer_id) {
         fetch("/api/find-customer", {
                 body: JSON.stringify({
@@ -313,7 +315,6 @@
                             customerTablePassbook.innerHTML +=
                             `<tr>
                             <th scope="row">${passbook.id}</th>
-                            <td>${passbook.customer_id}</td>
                             <td>${passbook.passbook_type_id}</td>
                             <td>${amount} VNĐ</td>
                             <td>${date.toLocaleDateString()}</td>
@@ -325,12 +326,11 @@
                             customerTablePassbook.innerHTML +=
                             `<tr>
                             <th scope="row">${passbook.id}</th>
-                            <td>${passbook.customer_id}</td>
                             <td>${passbook.passbook_type_id}</td>
                             <td>${amount} VNĐ</td>
                             <td>${date.toLocaleDateString()}</td>
                             <td>
-                                <button class="btn btn-warning">Giao dịch</button>
+                                <button class="btn btn-warning" onClick="goTransaction(${passbook.id})">Giao dịch</button>
                             </td>
                             </tr>`;
                         }
@@ -338,6 +338,14 @@
                     })
                 })
             })
+      }
+
+      function goTransaction(passbook_id) {
+        let obj = passbook_id.toString();
+        let hashObj = new jsSHA("SHA-512", "TEXT", {numRounds: 1});
+        hashObj.update(obj);
+        let hash = hashObj.getHash("HEX");
+        window.location.href = `/transaction-passbook/${hash}`;
       }
 
       function createCustomer() {
@@ -415,6 +423,12 @@
                         headers: {"Content-Type": "application/json"}
                     }).then(res => res.json()).then(data => {
                         console.log(data)
+                        drawFormFinish(data.transaction_slip[0].content,
+                                       data.transaction_slip[0].passbook_id,
+                                       data.passbook[0].passbook_type_id,
+                                       customerName.value,
+                                       data.transaction_slip[0].transaction_date,
+                                       data.transaction_slip[0].transaction_amount)
                         goFinish();
                     })
                 } else {
@@ -449,6 +463,12 @@
                         headers: {"Content-Type": "application/json"}
                     }).then(res => res.json()).then(data => {
                         console.log(data)
+                        drawFormFinish(data.transaction_slip[0].content,
+                                       data.transaction_slip[0].passbook_id,
+                                       data.passbook[0].passbook_type_id,
+                                       customerName.value,
+                                       data.transaction_slip[0].transaction_date,
+                                       data.transaction_slip[0].transaction_amount)
                         goFinish();
                     })
                 } else {
@@ -463,11 +483,35 @@
       }
 
 
+      function drawFormFinish(title, passbook_id, passbook_type, customer, time, amount) {
+        let transaction_amount = numberWithCommas(amount);
+        formFinish.innerHTML =
+        `<div class="container">
+            <div class="row">
+                <h1 class="display-4" style="font-size: 1.8rem;">${title} thành công</h1>
+            </div>
+                <div class="dropdown-divider"></div>
 
+            <dl class="row">
+              <dt class="col-sm-4">Mã sổ: </dt>
+              <dd class="col-sm-8">${passbook_id}</dd>
+
+              <dt class="col-sm-4">Loại sổ: </dt>
+              <dd class="col-sm-8">${passbook_type}</dd>
+
+              <dt class="col-sm-4">Khách hàng: </dt>
+              <dd class="col-sm-8">${customer}</dd>
+
+              <dt class="col-sm-4">Thời gian giao dịch: </dt>
+              <dd class="col-sm-8"> ${time}</dd>
+
+              <dt class="col-sm-4">Số tiền giao dịch: </dt>
+              <dd class="col-sm-8">${transaction_amount} VNĐ</dd>
+            </dl>
+        </div>`;
+      }
 
 </script>
-
-
 {% endblock javascripts %}
 
 

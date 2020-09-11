@@ -1,8 +1,11 @@
-from app import app, login, decorator, dao
-from flask import render_template, request, jsonify, session
-from flask_login import login_user, logout_user
+from datetime import timedelta
+
+from app import app, login, decorator, dao, api
+from flask import render_template, session, Blueprint
+from flask_login import login_user
+from flask_paginate import Pagination, get_page_parameter, get_page_args
 import hashlib
-import json
+from dateutil.relativedelta import relativedelta
 
 from datetime import datetime
 
@@ -10,7 +13,7 @@ from datetime import datetime
 @app.route("/")
 @decorator.login_required_user
 def index():
-    return render_template("layouts/base.html")
+    return redirect(url_for("passbook_list"))
 
 
 @app.route("/login-employee", methods=["post", "get"])
@@ -38,12 +41,11 @@ def login_employee():
                 if emp.active:
                     login_user(user=emp)
                     session.pop('try_login', None)
-                    activity_time = datetime.now()
-                    activity = "Đăng nhập"
-                    description = ""
-                    employee_id = current_user.id
-                    dao.add_activity_log(activity_time=activity_time, activity=activity,
-                                         description=description, employee_id=employee_id)
+
+                    dao.add_activity_log(activity="Đăng nhập",
+                                         description="",
+                                         employee_id=current_user.id)
+
                     if emp.employee_role == EmployeeRole.ADMIN:
                         return redirect("/admin")
                     else:
@@ -70,12 +72,9 @@ def report_password():
             dao.set_employee_status(emp.id)
             msg_pass = "Vô hiệu hóa tài khoản thành công"
 
-            activity_time = datetime.now()
-            activity = "Báo quên mật khẩu"
-            description = "Yêu cầu quản trị viên đặt lại mật khẩu mặc định"
-            employee_id = emp.id
-            dao.add_activity_log(activity_time=activity_time, activity=activity,
-                                 description=description, employee_id=employee_id)
+            dao.add_activity_log(activity="Báo quên mật khẩu",
+                                 description="Yêu cầu quản trị viên đặt lại mật khẩu mặc định",
+                                 employee_id=emp.id)
         else:
             err_msg_pass = "Tài khoản không tồn tại"
     return render_template("accounts/login.html", msg_pass=msg_pass, err_msg_pass=err_msg_pass, msg=msg)
@@ -83,28 +82,11 @@ def report_password():
 
 @app.route("/logout-employee")
 def logout_employee():
-    activity_time = datetime.now()
-    activity = "Đăng xuất"
-    description = ""
-    employee_id = current_user.id
-    if dao.add_activity_log(activity_time=activity_time, activity=activity,
-                            description=description, employee_id=employee_id):
+    if dao.add_activity_log(activity="Đăng xuất",
+                            description="",
+                            employee_id=current_user.id):
         logout_user()
     return redirect(url_for("index"))
-
-
-@app.route("/api/logout-employee-auto/<int:employee_id>", methods=["post"])
-def logout_employee_auto(employee_id):
-    activity_time = datetime.now()
-    activity = "Đăng xuất tự động"
-    description = "Nhân viên không có hoạt động"
-    employee_id = current_user.id
-    if dao.add_activity_log(activity_time=activity_time, activity=activity,
-                            description=description, employee_id=employee_id):
-        logout_user()
-        return jsonify({"status": 200})
-
-    return jsonify({"status": 500, "error_message": "Something Wrong!!!"})
 
 
 @app.route("/setting-employee", methods=["get", "post"])
@@ -157,11 +139,9 @@ def setting_employee():
                 description = err_msg_pass
 
     if description != "":
-        activity_time = datetime.now()
-        activity = "Sửa thông tin tài khoản"
-        employee_id = current_user.id
-        dao.add_activity_log(activity_time=activity_time, activity=activity,
-                             description=description, employee_id=employee_id)
+        dao.add_activity_log(activity="Sửa thông tin tài khoản",
+                             description=description,
+                             employee_id=current_user.id)
 
     if current_user.employee_role == EmployeeRole.EMPLOYEE:
         return render_template("accounts/setting_employee.html",
@@ -177,134 +157,128 @@ def setting_employee():
 @decorator.login_required_user
 def passbook_list():
     passbook_id = None
-    customer_id = None
     if request.method == "POST":
         passbook_id = request.form.get("passbookID")
+
     passbooks = dao.get_passbook_list(passbook_id)
-    return render_template("layouts/passbook_list.html", passbooks=passbooks)
+    page, per_page, offset = get_page_args(page_parameter='page',
+                                           per_page_parameter='per_page')
+    total = len(passbooks)
+    pagination_passbooks = passbooks[offset: offset + per_page]
+    pagination = Pagination(page=page, per_page=per_page, total=total,
+                            css_framework='bootstrap4')
+
+    passbook_types = dao.get_passbook_type()
+
+    return render_template("layouts/passbook_list.html",
+                           passbooks=pagination_passbooks,
+                           page=page,
+                           per_page=per_page,
+                           pagination=pagination,
+                           passbook_types=passbook_types)
 
 
 @app.route("/open-passbook", methods=["get", "post"])
 @decorator.login_required_user
 def open_passbook():
-    if request.method == "POST":
-        pass
+    customers = dao.find_customer()
+    page, per_page, offset = get_page_args(page_parameter='page',
+                                           per_page_parameter='per_page')
+    total = len(customers)
+    pagination_customers = customers[offset: offset + per_page]
+    pagination = Pagination(page=page, per_page=per_page, total=total,
+                            css_framework='bootstrap4')
+
     return render_template("layouts/open_passbook.html",
-                           customers=dao.find_customer(),
+                           customers=pagination_customers,
+                           page=page,
+                           per_page=per_page,
+                           pagination=pagination,
                            passbook_type=dao.get_passbook_type())
 
 
-@app.route("/api/create-passbook", methods=["post"])
+@app.route("/transaction-passbook/<passbook_id>", methods=["get", "post"])
 @decorator.login_required_user
-def create_passbook():
-    try:
-        data = json.loads(request.data)
-        customer_id = data.get('customer_id')
-        passbook_type_id = data.get('passbook_type_id')
-        balance_amount = data.get('balance_amount')
+def transaction_passbook(passbook_id):
+    if passbook_id != "0":
+        passbook = dao.find_passbook(passbook_id)
+        if passbook:
+            if passbook.balance_amount != 0:
+                customer = dao.get_customer_by_id(passbook.customer_id)
+                passbook_type = dao.get_passbook_type(passbook.passbook_type_id)
+                transaction_slips = dao.get_transaction_slip(passbook_id=passbook.id)
 
-        passbook = dao.create_passbook(customer_id=customer_id,
-                                       passbook_type_id=passbook_type_id,
-                                       balance_amount=balance_amount)
-        return jsonify({"status": 200, "passbook": [passbook.dump()]})
-    except Exception as ex:
-        return jsonify({"status": 500, "error": ex})
+                if passbook_type[0].term == 0:
+                    withdraw_date = (passbook.open_date + timedelta(days=passbook_type[0].minimum_deposit_date))
+                    last_transaction_date = dao.get_last_transaction_date(passbook_id=passbook.id)
 
+                    deposit_month = 0
+                    if last_transaction_date:
+                        deposit_month = (datetime.now().year - last_transaction_date.year) * 12 + \
+                                        datetime.now().month - last_transaction_date.month
+                    else:
+                        deposit_month = (datetime.now().year - passbook.open_date.year) * 12 + \
+                                        datetime.now().month - passbook.open_date.month
 
-@app.route("/api/update-passbook", methods=["post"])
-@decorator.login_required_user
-def update_passbook():
-    try:
-        data = json.loads(request.data)
-        passbook_id = data.get('passbook_id')
-        passbook_type_id = data.get('passbook_type_id')
-        balance_amount = data.get('balance_amount')
+                    return render_template("layouts/transaction_passbook.html",
+                                           passbook=passbook,
+                                           customer=customer,
+                                           transaction_slips=transaction_slips,
+                                           passbook_type=passbook_type[0],
+                                           withdraw_date=withdraw_date.date(),
+                                           deposit_month=deposit_month,
+                                           datenow=datetime.now().date(), )
+                else:
+                    last_maturity_date = dao.get_last_transaction_date(passbook_id=passbook.id)
+                    maturity_times = dao.get_maturity_time(passbook_id=passbook.id, open_date=passbook.open_date)
 
-        passbook = dao.update_passbook(passbook_id=passbook_id,
-                                       passbook_type_id=passbook_type_id,
-                                       balance_amount=balance_amount)
-        return jsonify({"status": 200, "passbook": [passbook.dump()]})
-    except Exception as ex:
-        return jsonify({"status": 500, "error": ex})
+                    maturity_date = passbook.open_date
+                    interest_money = maturity_times * \
+                                     passbook_type[0].interest_rate * \
+                                     passbook_type[0].term * \
+                                     passbook.balance_amount
 
+                    if last_maturity_date and last_maturity_date > passbook.open_date:
+                        maturity_date = last_maturity_date
+                    maturity_date += relativedelta(months=+passbook_type[0].term)
 
-@app.route("/api/create-customer", methods=["post"])
-@decorator.login_required_user
-def create_customer():
-    try:
-        data = json.loads(request.data)
-        name = data.get('name')
-        identity_card_number = data.get('identity_card_number')
-        phone = data.get('phone')
-
-        customer = dao.create_customer(name=name, identity_card_number=identity_card_number, phone=phone)
-        return jsonify({"status": 200, "id": customer.id, "name": customer.name})
-    except Exception as ex:
-        return jsonify({"status": 500, "error": ex})
-
-
-@app.route("/api/update-customer", methods=["post"])
-@decorator.login_required_user
-def update_customer():
-    try:
-        data = json.loads(request.data)
-        customer_id = data.get('customer_id')
-        phone = data.get('phone')
-
-        customer = dao.update_customer(customer_id=customer_id, phone=phone)
-        return jsonify({"status": 200, "customer": customer.dump()})
-    except Exception as ex:
-        return jsonify({"status": 500, "error": ex})
-
-
-@app.route("/api/find-customer", methods=["post"])
-@decorator.login_required_user
-def find_customer():
-    try:
-        data = json.loads(request.data)
-        customer_id = data.get('customer_id')
-        identity_number = data.get('identity_number')
-        name = data.get('name')
-
-        customers = dao.find_customer(customer_id=customer_id, identity_number=identity_number, name=name)
-        return jsonify({"status": 200, "customers": [c.dump() for c in customers]})
-
-    except Exception as ex:
-        return jsonify({"status": 500, "error": ex})
+                    return render_template("layouts/transaction_passbook.html",
+                                           passbook=passbook,
+                                           customer=customer,
+                                           transaction_slips=transaction_slips,
+                                           passbook_type=passbook_type[0],
+                                           maturity_date=maturity_date.date(),
+                                           interest_money=interest_money,
+                                           maturity_times=maturity_times,
+                                           datenow=datetime.now().date(), )
+            else:
+                return render_template("layouts/transaction_passbook.html",
+                                       msg="Sổ tiết kiệm đã bị đóng")
+        else:
+            return render_template("layouts/transaction_passbook.html",
+                                   msg="Mã sổ không tồn tại")
+    return render_template("layouts/transaction_passbook.html")
 
 
-@app.route("/api/find-passbook-type", methods=["post"])
-@decorator.login_required_user
-def find_passbook_type():
-    try:
-        data = json.loads(request.data)
-        passbook_type_id = data.get('passbook_type_id')
+@app.route("/report", methods=["get", "post"])
+@decorator.login_required_manager
+def report():
+    passbook_types = dao.get_passbook_type()
+    if request.method == "POST":
+        date = request.form.get("date")
 
-        passbook_types = dao.get_passbook_type(passbook_type_id=passbook_type_id)
-        return jsonify({"status": 200, "passbook_types": [passbook_type.dump() for passbook_type in passbook_types]})
+        passbook_type = request.form.get("passbookType")
+        month = request.form.get("month")
 
-    except Exception as ex:
-        return jsonify({"status": 500, "error": ex})
+        if date:
+            report_revenue_day = dao.report_revenue_day(date)
 
+            return render_template("layouts/report.html",
+                                   passbook_types=passbook_types,
+                                   report_revenue_day=report_revenue_day)
 
-@app.route("/api/find-passbook", methods=["post"])
-@decorator.login_required_user
-def find_passbook():
-    try:
-        data = json.loads(request.data)
-        passbook_id = data.get('passbook_id')
-        customer_id = data.get('customer_id')
-        passbook_type_id = data.get('passbook_type_id')
-        open_date = data.get('open_date')
-
-        passbooks = dao.get_passbook_list(passbook_id=passbook_id,
-                                          customer_id=customer_id,
-                                          passbook_type_id=passbook_type_id,
-                                          open_date=open_date)
-        return jsonify({"status": 200, "passbooks": [passbook.dump() for passbook in passbooks]})
-
-    except Exception as ex:
-        return jsonify({"status": 500, "error": ex})
+    return render_template("layouts/report.html",
+                           passbook_types=passbook_types)
 
 
 @login.user_loader

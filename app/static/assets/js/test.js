@@ -91,6 +91,17 @@ function createPassbook() {
                 name.value = data.customers[0].name;
                 phone.value = data.customers[0].phone;
 
+                customerId.value = data.customers[0].id;
+                customerName.value = data.customers[0].name;
+
+                identityNumber.readOnly = true;
+                name.readOnly = true;
+
+                btnCreateAndContinue.style = "display: none";
+                btnContinue.style = "";
+                btnUpdateCustomer.style = "";
+                btnBack.style = "";
+
                 customerTableName.innerText = `Khách hàng: ${data.customers[0].name}`;
                 fetch("/api/find-passbook", {
                   body: JSON.stringify({
@@ -101,17 +112,39 @@ function createPassbook() {
                 }).then(res => res.json()).then(data => {
                     customerTablePassbook.innerHTML = '';
                     data.passbooks.forEach(passbook => {
-                        customerTablePassbook.innerHTML +=
-                        `<tr>
-                        <th scope="row">{{ passbook.id }}</th>
-                        <td>{{ passbook.customer_id }}</td>
-                        <td>{{ passbook.passbook_type_id }} - {{ passbook.passbook_type_id }}</td>
-                        <td>{{ passbook.balance_amount }}</td>
-                        <td>{{ passbook.open_date }}</td>
-                        <td>
-                            <button class="btn btn-warning">Giao dịch</button>
-                        </td>
-                        </tr>`;
+                        let date = new Date(passbook.open_date);
+                        let amount = numberWithCommas(passbook.balance_amount);
+                        let passbook_id_for_transaction = passbook.id;
+                        let url_for_transaction =
+                        "{{ url_for('transaction_passbook', passbook_id=" + passbook_id_for_transaction + ") }}";
+
+                        if (passbook.balance_amount == 0){
+                            customerTablePassbook.innerHTML +=
+                            `<tr>
+                            <th scope="row">${passbook.id}</th>
+                            <td>${passbook.passbook_type_id}</td>
+                            <td>${amount} VNĐ</td>
+                            <td>${date.toLocaleDateString()}</td>
+                            <td>
+                                <button class="btn btn-primary" onClick="goPassbookOld(${passbook.id})">Mở sổ</button>
+                            </td>
+                            </tr>`;
+                        } else {
+                            customerTablePassbook.innerHTML +=
+                            `<tr>
+                            <th scope="row">${passbook.id}</th>
+                            <td>${passbook.passbook_type_id}</td>
+                            <td>${amount} VNĐ</td>
+                            <td>${date.toLocaleDateString()}</td>
+                            <td>
+                                <a class="btn btn-warning"
+                                href="${url_for_transaction}">
+                                    Giao dịch
+                                </a>
+                            </td>
+                            </tr>`;
+                        }
+
                     })
                 })
             })
@@ -164,5 +197,54 @@ function updateCustomer() {
         }else {
             msgPassbook.style = "";
             msgPassbook.innerText = "Vui lòng nhập đầy đủ thông tin"
+        }
+      }
+
+      function drawFormFinish(title, passbook_id, customer, time, amount) {
+        formFinish.innerHTML =
+        `<div class="container">
+            <div class="row">
+                <h1 class="display-4" style="font-size: 1.8rem;">${title}</h1>
+            </div>
+                <div class="dropdown-divider"></div>
+            <form>
+                <div class="form-group">
+                    <label>Mã sổ: &{passbook_id}</label>
+                </div>
+                <div class="form-group">
+                    <label>Khách hàng: &{customer}</label>
+                </div>
+                <div class="form-group">
+                    <label>Thời gian giao dịch: &{time}</label>
+                </div>
+                <div class="form-group">
+                    <label>Số tiền giao dịch: &{amount}</label>
+                </div>
+            </form>
+        </div>`;
+      }
+
+      function updatePassbookDeposit() {
+        if (depositAmount.value != ""){
+            if ({{ passbook_type.minimum_deposit }} <= depositAmount.value) {
+                fetch("/api/update-passbook", {
+                    body: JSON.stringify({
+                        "passbook_id": {{ passbook.id }},
+                        "balance_amount": depositAmount.value
+                    }),
+                    method: "post",
+                    headers: {"Content-Type": "application/json"}
+                }).then(res => res.json()).then(data => {
+                    console.log(data)
+                    goFinish();
+                })
+            } else {
+                msgDeposit.style = "";
+                msgDeposit.innerText = "Số tiền gửi thêm phải lớn hơn" +
+                {{ "{:,.0f}".format(passbook_type.minimum_deposit) }} + VNĐ;
+            }
+        }else {
+            msgDeposit.style = "";
+            msgDeposit.innerText = "Vui lòng nhập đầy đủ thông tin"
         }
       }

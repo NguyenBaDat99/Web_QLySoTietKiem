@@ -31,12 +31,28 @@ def login_required_user(f):
             return redirect(url_for("login_employee", next=request.url))
 
         if current_user.employee_role != EmployeeRole.EMPLOYEE:
-            activity_time = datetime.now()
-            activity = "Đăng xuất tự động"
-            description = "Nhân viên truy cập vào trang không được phân quyền"
-            employee_id = current_user.id
-            dao.add_activity_log(activity_time=activity_time, activity=activity,
-                                 description=description, employee_id=employee_id)
+            dao.add_activity_log(activity="Đăng xuất tự động",
+                                 description="Nhân viên truy cập vào trang không được phân quyền",
+                                 employee_id=current_user.id)
+            logout_user()
+            return redirect(url_for("login_employee", next=request.url))
+
+        return f(*args, **kwargs)
+
+    return check
+
+
+def login_required_manager(f):
+    @wraps(f)
+    def check(*args, **kwargs):
+        if not current_user.is_authenticated or not current_user.active:
+            logout_user()
+            return redirect(url_for("login_employee", next=request.url))
+
+        if current_user.employee_role != EmployeeRole.EMPLOYEE or current_user.position_id != 1:
+            dao.add_activity_log(activity="Đăng xuất tự động",
+                                 description="Nhân viên truy cập vào trang không được phân quyền",
+                                 employee_id=current_user.id)
             logout_user()
             return redirect(url_for("login_employee", next=request.url))
 
@@ -55,3 +71,5 @@ def login_required(f):
         return f(*args, **kwargs)
 
     return check
+
+
