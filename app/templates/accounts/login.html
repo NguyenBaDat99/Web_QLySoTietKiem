@@ -1,108 +1,146 @@
-{% extends "layouts/base-fullscreen.html" %}
+{% extends "layouts/base.html" %}
 
-{% block title %} Login {% endblock %} 
-
-<!-- Element injected in the BODY element -->
-{% block body_class %} login-page {% endblock body_class %}
-
-<!-- Specific Page CSS goes HERE  -->
-{% block stylesheets %}
-
-  <!-- Google Font: Source Sans Pro -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="/static/assets/plugins/fontawesome-free/css/all.min.css">
-  <!-- icheck bootstrap -->
-  <link rel="stylesheet" href="/static/assets/plugins/icheck-bootstrap/icheck-bootstrap.min.css">
-  <!-- Theme style -->
-  <link rel="stylesheet" href="/static/assets/css/adminlte.min.css">
-
-{% endblock stylesheets %}
+{% block title %}- Đăng nhập{% endblock %}
 
 {% block content %}
-
-  <div class="login-box">
-
-    <div class="login-logo">
-        <a target="_blank" rel="noopener noreferrer" 
-           href="https://appseed.us/admin-dashboards/flask-dashboard-adminlte">Flask <b>Admin</b>LTE</a>
-    </div>
-
-    <!-- /.login-logo -->
-    <div class="card">
-      <div class="card-body login-card-body">
-
-            <p class="login-box-msg">
-            {% if msg %}
-                {{ msg | safe }}
-            {% else %}
-                Use default credentials: <strong>test / pass</strong>
-            {% endif %}
-        </p>
-
-        <form method="post" action="">
-
-          {{ form.hidden_tag() }}
-
-          <div class="input-group mb-3">
-            {{ form.username(placeholder="Username", class="form-control") }}
-            <div class="input-group-append">
-              <div class="input-group-text">
-                <span class="fas fa-envelope"></span>
-              </div>
-            </div>
-          </div>
-          <div class="input-group mb-3">
-            {{ form.password(placeholder="Password", class="form-control", type="password") }}
-            <div class="input-group-append">
-              <div class="input-group-text">
-                <span class="fas fa-lock"></span>
-              </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-8">
-              <div class="icheck-primary">
-                <input type="checkbox" id="remember">
-                <label for="remember">
-                  Remember Me
-                </label>
-              </div>
-            </div>
-            <!-- /.col -->
-            <div class="col-4">
-              <button type="submit" name="login" class="btn btn-primary btn-block">Sign In</button>
-            </div>
-            <!-- /.col -->
-          </div>
-        </form>
-
-        <br /><br />
-
-        <div class="text-center">
-            Not a member? <a href="{{ url_for('base_blueprint.register') }}" class="text-center">Register</a>
-            <br />
-            <br />
-            &copy; ColorLib 
-            <a target="_blank" rel="noopener noreferrer"
-               href="https://appseed.us/admin-dashboards/flask-dashboard-adminlte"><b>Admin</b>LTE</a> 
-            - coded by <a target="_blank" rel="noopener noreferrer" href="https://appseed.us">AppSeed</a>.
+<div class="jumbotron text-center">
+    <h1 class="display-3" style="color: green">NGÂN HÀNG</h1>
+    <p class="lead" style="color: green">Quản lý sổ tiết kiệm</p>
+</div>
+<div class="container" style="text-align: -webkit-center;">
+    <form class="jumbotron text-center" action="{{ url_for('login_employee') }}" style="width:368px" method="POST"
+          id="login-form">
+        <h2 class="display-4" style="font-size: 2.5rem;">Đăng nhập</h2>
+        <div class="form-group">
+            <input class="form-control" name="username" placeholder="Tên đăng nhập" required>
         </div>
+        <div class="form-group">
+            <input type="password" class="form-control" id="passwordIn" placeholder="Mật khẩu" onkeyup="trigger()"
+                   required>
+            <input type="text" class="form-control" id="passwordHashed" name="password" style="display: none;">
+        </div>
+        {% if try_login %}
+            {% if try_login >= 3 %}
+            <div class="g-recaptcha" data-sitekey="6LejxccZAAAAAHMe7OJDwjsjI6VZGxkToZ12cgMt"></div>
+            <br/>
+            {% endif %}
+        {% endif %}
 
-      </div>
-      <!-- /.login-card-body -->
+        {% if msg %}
+        <div class="alert alert-danger" role="alert">
+            {{ msg }}
+        </div>
+        {% endif %}
+        {% if msg_deactive %}
+        <div class="alert alert-danger" role="alert">
+            {{ msg_deactive }}
+        </div>
+        {% endif %}
+        <!--            <div class="checkbox">-->
+        <!--                <label><input type="checkbox" name="remember">Nhớ mật khẩu</label>-->
+        <!--            </div>-->
+        <!--        <button type="submit" name="btnSignIn" class="btn btn-success g-recaptcha" value="Đăng nhập"-->
+        <!--        data-sitekey="6Ld7xMcZAAAAABig1zPRhiEz0W99_1lQCN9-uYHQ"-->
+        <!--        data-callback='onSubmit'-->
+        <!--                data-action='submit'></button>-->
+
+        <!--     reCaptcha v3   -->
+        <!--        <button class="g-recaptcha btn btn-success"-->
+        <!--                data-sitekey="6Ld7xMcZAAAAABig1zPRhiEz0W99_1lQCN9-uYHQ"-->
+        <!--                data-callback='onSubmit'-->
+        <!--                data-action='submit' type="submit">Đăng nhập-->
+
+        <input type="submit" class="btn btn-success" value="Đăng nhập">
+        </button>
+
+        {% if msg %}
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#forgetPasswordModal">
+            Quên mật khẩu
+        </button>
+        {% endif %}
+    </form>
+
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="forgetPasswordModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title display-4" style="font-size: 1.8rem;" id="exampleModalLabel">Hướng dẫn lấy mật
+                    khẩu</h3>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="lead" style="font-size: 1.35rem">
+                    <strong>Bước 1</strong>: Nhân viên chắc chắn mình đã quên mật khẩu,
+                    vui lòng nhập tên tài khoản để vô hiệu hóa</p>
+                <br>
+                <form action="{{ url_for('report_password')}}" method="post">
+                    <div class="row">
+                        <div class="form-group col-7">
+                            <input class="form-control" name="username" placeholder="Tên đăng nhập" required>
+                        </div>
+                        <div class="form-group col-5">
+                            <button type="submit" class="btn btn-warning">Báo quên mật khẩu</button>
+                        </div>
+                    </div>
+                    {% if err_msg_pass %}
+                    <div class="alert alert-danger" role="alert">
+                        {{ err_msg_pass }}
+                    </div>
+                    {% endif %}
+                    {% if msg_pass %}
+                    <div class="alert alert-success" role="alert">
+                        {{ msg_pass }}
+                    </div>
+                    {% endif %}
+                </form>
+                <br>
+                <p class="lead" style="font-size: 1.35rem">
+                    <strong>Bước 2</strong>: Nhân viên liên hệ với bộ phận quản lý nhân sự qua SĐT 0933283350
+                    để được hướng dẫn lấy lại mật khẩu
+                    <br>
+                    <i>Mọi thắc mắc xin liên hệ 0933283350 - Bộ phận nhân sự</i>
+                </p>
+                <div class="dropdown-divider"></div>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Đã hiểu</button>
+            </div>
+        </div>
     </div>
+</div>
 
-  </div>
+<script type="text/javascript">
+      const passwordIn = document.getElementById('passwordIn');
+      const passwordHashed = document.getElementById('passwordHashed');
 
+      function init() {
+        if("{{ msg_pass }}" != "" || "{{ err_msg_pass }}" != "" ){
+            $('#forgetPasswordModal').modal('show')
+        }
+        trigger();
+      }
+
+
+      function hash512(obj) {
+          var hashObj = new jsSHA("SHA-512", "TEXT", {numRounds: 1});
+          hashObj.update(obj);
+          var hash = hashObj.getHash("HEX");
+          return hash;
+        }
+
+      function trigger(){
+        if(passwordIn.value != ""){
+            passwordHashed.value = hash512(passwordIn.value);
+        }
+      }
+</script>
 {% endblock content %}
 
-<!-- Specific Page JS goes HERE  -->
-{% block javascripts %}
 
-  <!-- jQuery -->
-  <script src="/static/assets/plugins/jquery/jquery.min.js"></script>
-  <!-- Bootstrap 4 -->
-  <script src="/static/assets/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
 
-{% endblock javascripts %}
+
+
+

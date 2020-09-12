@@ -1,0 +1,105 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}- Tra cứu sổ{% endblock title %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="static/assets/css/passbook-list.css">
+{% endblock stylesheets %}
+
+{% block content %}
+
+<div class="container-fluid ">
+    <div class="row">
+        <div class="col-9 table-responsive">
+            <nav class="navbar navbar-dark bg-dark">
+                <a class="navbar-brand">Danh sách sổ tiết kiệm</a>
+                <form class="form-inline" method="post">
+                    &emsp;
+                    <input class="form-control mr-sm-2" name="ttTimKiem" type="search"
+                           placeholder="Nhập thông tin"
+                           aria-label="Search" required maxlength="20">
+                    <input class="btn btn-outline-light" value="Tìm kiếm">
+                </form>
+            </nav>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th scope="col">Mã sổ</th>
+                    <th scope="col">Khách hàng</th>
+                    <th scope="col">Loại sổ tiết kiệm</th>
+                    <th scope="col">Số dư</th>
+                    <th scope="col">Ngày mở sổ</th>
+                    <th scope="col">Thao tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for passbook in passbooks %}
+                <tr>
+                    <th scope="row">{{ passbook.id }}</th>
+                    <td>{{ passbook.customer_id }}</td>
+                    <td>{{ passbook.passbook_type_id }}</td>
+                    <td>{{ "{:,.0f}".format(passbook.balance_amount) }} VNĐ</td>
+                    <td>{{ passbook.open_date }}</td>
+                    <td>
+                        <button class="btn btn-warning" onClick="goTransaction({{ passbook.id }})">
+                            Giao dịch
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <!--            {{ pagination.info }}-->
+            {{ pagination.links }}
+        </div>
+        <div class="col-3 note" style="overflow: auto; height: 800px">
+            <nav class="navbar navbar-light">
+                <a class="navbar-brand">Các loại sổ tiết kiệm</a>
+                <form class="form-inline" method="post">
+                    &emsp;
+                    <input class="form-control mr-sm-2" name="ttTimKiem" type="search"
+                           placeholder="Nhập thông tin"
+                           aria-label="Search" required maxlength="20">
+                    <input class="btn btn-outline-dark" value="Tìm kiếm">
+                </form>
+            </nav>
+            {% for p in passbook_types %}
+            <div class="note" >
+                <dl class="row">
+                    <dt class="col-sm-5">Loại sổ:</dt>
+                    <dd class="col-sm-7">{{ p.passbook_type_name }}</dd>
+
+                    <dt class="col-sm-5">Số tiền gửi tối thiểu:</dt>
+                    <dd class="col-sm-7">{{ "{:,.0f}".format(p.minimum_deposit) }} VNĐ</dd>
+
+                    <dt class="col-sm-5">Số ngày gửi tối thiểu:</dt>
+                    <dd class="col-sm-7">{{ p.minimum_deposit_date }} Ngày</dd>
+
+                    <dt class="col-sm-5">Lãi suất:</dt>
+                    <dd class="col-sm-7">{{ "{:,.4f}".format(p.interest_rate * 100) }}%</dd>
+
+                    <dt class="col-sm-5">Ngày áp dụng:</dt>
+                    <dd class="col-sm-7">{{ p.apply_date }}</dd>
+
+                    <dt class="col-sm-5">Kỳ hạn:</dt>
+                    <dd class="col-sm-7">{{ p.term }} Tháng</dd>
+                </dl>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block javascripts %}
+<script type="text/javascript">
+      function goTransaction(passbook_id) {
+        let obj = passbook_id.toString();
+        let hashObj = new jsSHA("SHA-512", "TEXT", {numRounds: 1});
+        hashObj.update(obj);
+        let hash = hashObj.getHash("HEX");
+        window.location.href = `/transaction-passbook/${hash}`;
+      }
+</script>
+{% endblock javascripts %}
