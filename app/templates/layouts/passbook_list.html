@@ -10,7 +10,7 @@
 
 <div class="container-fluid ">
     <div class="row">
-        <div class="col-9 table-responsive">
+        <div class="col-8">
             <nav class="navbar navbar-dark bg-dark">
                 <a class="navbar-brand">Danh sách sổ tiết kiệm</a>
                 <form class="form-inline" method="post">
@@ -52,7 +52,7 @@
             <!--            {{ pagination.info }}-->
             {{ pagination.links }}
         </div>
-        <div class="col-3 note" style="overflow: auto; height: 800px">
+        <div class="col-4" style="overflow: auto; height: 750px">
             <nav class="navbar navbar-light">
                 <a class="navbar-brand">Các loại sổ tiết kiệm</a>
                 <form class="form-inline" method="post">
@@ -66,6 +66,9 @@
             {% for p in passbook_types %}
             <div class="note" >
                 <dl class="row">
+                    <dt class="col-sm-5">Mã loại sổ:</dt>
+                    <dd class="col-sm-7">{{ p.id }}</dd>
+
                     <dt class="col-sm-5">Loại sổ:</dt>
                     <dd class="col-sm-7">{{ p.passbook_type_name }}</dd>
 

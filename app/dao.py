@@ -1,6 +1,6 @@
 import hashlib
 
-from sqlalchemy import func, join
+from sqlalchemy import func, join, select, outerjoin
 
 from app import db
 from app.models import Employee, Passbook, ActivityLog, Customer, PassbookTypes, TransactionSlip, TransactionType
@@ -241,14 +241,58 @@ def get_maturity_time(passbook_id, open_date):
 
 
 def report_revenue_day(date):
-    result = db.session.query(PassbookTypes.passbook_type_name.label('passbook_type'),
-                              func.sum(TransactionSlip.transaction_amount).label('collect'),
-                              func.sum(TransactionSlip.interest_amount).label('spend'),)\
-                            .join(Passbook,
-                                  Passbook.passbook_type_id == PassbookTypes.id)\
-                            .join(TransactionSlip,
-                                  TransactionSlip.passbook_id == Passbook.id)\
-                            .group_by(PassbookTypes.passbook_type_name) \
-                            .all()
+    from_date = date + ' 00:00:00'
+    to_date = date + ' 23:59:59'
+
+    result = db.session.query(
+        PassbookTypes.passbook_type_name.label('passbook_type_name'),
+        func.sum(TransactionSlip.transaction_amount).label('collect'),
+        func.sum(TransactionSlip.interest_amount).label('spend')) \
+        .join(Passbook,
+              Passbook.passbook_type_id == PassbookTypes.id) \
+        .join(TransactionSlip,
+              TransactionSlip.passbook_id == Passbook.id) \
+        .filter(TransactionSlip.transaction_date.between(from_date, to_date)) \
+        .group_by(PassbookTypes.passbook_type_name) \
+        .all()
+
+    collect = db.session.query(
+        TransactionSlip.passbook_id.label('passbook_id'),
+        func.sum(TransactionSlip.transaction_amount).label('collect'),
+        func.sum(TransactionSlip.transaction_amount*0).label('spend_withdraw'),
+        func.sum(TransactionSlip.transaction_amount*0).label('spend_interest'),) \
+        .filter(TransactionSlip.transaction_date.between(from_date, to_date)) \
+        .filter(TransactionSlip.transaction_type != TransactionType.WITHDRAW) \
+        .group_by(TransactionSlip.passbook_id) \
+        .all()
+
+    # s1 = select(TransactionSlip.passbook_id.label('passbook_id'),
+    #             func.sum(TransactionSlip.transaction_amount).label('collect'))\
+    #     .where(TransactionSlip.transaction_date.between(from_date, to_date))\
+    #     .where(TransactionSlip.transaction_type != TransactionType.WITHDRAW)\
+    #     .group_by(TransactionSlip.passbook_id)
+
+
+
+    spend_withdraw = db.session.query(
+        TransactionSlip.passbook_id.label('passbook_id'),
+        func.sum(TransactionSlip.transaction_amount).label('spend')) \
+        .filter(TransactionSlip.transaction_date.between(from_date, to_date)) \
+        .filter(TransactionSlip.transaction_type == TransactionType.WITHDRAW) \
+        .group_by(TransactionSlip.passbook_id) \
+        .all()
+
+    spend_interest = db.session.query(
+        TransactionSlip.passbook_id.label('passbook_id'),
+        func.sum(TransactionSlip.interest_amount).label('spend')) \
+        .filter(TransactionSlip.transaction_date.between(from_date, to_date)) \
+        .group_by(TransactionSlip.passbook_id) \
+        .all()
+
+    # spend = spend_interest
+    # if spend_withdraw:
+    #     spend = spend_interest.union_all(spend_withdraw)
+    #
+    # result = collect.union_all(spend)
 
     return result

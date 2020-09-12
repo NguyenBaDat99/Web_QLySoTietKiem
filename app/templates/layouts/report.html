@@ -39,7 +39,7 @@
             <table class="table">
                 <thead class="thead-light">
                 <tr>
-                    <th scope="col">#</th>
+<!--                    <th scope="col">#</th>-->
                     <th scope="col">Loại tiết kiệm</th>
                     <th scope="col">Tổng thu</th>
                     <th scope="col">Tổng chi</th>
@@ -49,11 +49,11 @@
                 <tbody>
                 {% for r in report_revenue_day %}
                 <tr>
-                    <th scope="row">1</th>
-                    <td>{{ r.passbook_type }}</td>
-                    <td>{{ r.collect }}</td>
-                    <td>{{ r.spend }}</td>
-                    <td></td>
+<!--                    <th scope="row">1</th>-->
+                    <td>{{ r.passbook_type_name }}</td>
+                    <td>{{ "{:,.0f}".format(r.collect) }} VNĐ</td>
+                    <td>{{ "{:,.0f}".format(r.spend) }} VNĐ</td>
+                    <td>{{ "{:,.0f}".format(r.collect - r.spend) }} VNĐ</td>
                 </tr>
                 {% endfor %}
 
