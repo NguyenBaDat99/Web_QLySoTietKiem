@@ -1,5 +1,17 @@
+@import url('https://fonts.googleapis.com/css?family=Poppins:400,500,600,700&display=swap');
+
+.container{
+background: #fff;
+padding: 20px 30px;
+border-radius: 5px;
+margin: 20px 5px 10px 15px;
+box-shadow: 1px 2px 10px 0px rgba(3, 18, 26,0.3);
+max-width: 100%;
+}
+
 .breadcrumb {
    border-color: #28b62c;
    background-color: #f6f6f640;
    color: green;
 }
+

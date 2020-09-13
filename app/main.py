@@ -1,13 +1,11 @@
 from datetime import timedelta
 
-from app import app, login, decorator, dao, api
-from flask import render_template, session, Blueprint
+from app import app, login, decorator, api
+from flask import render_template, session
 from flask_login import login_user
-from flask_paginate import Pagination, get_page_parameter, get_page_args
+from flask_paginate import Pagination, get_page_args
 import hashlib
 from dateutil.relativedelta import relativedelta
-
-from datetime import datetime
 
 
 @app.route("/")
@@ -156,19 +154,33 @@ def setting_employee():
 @app.route("/passbook-list", methods=["get", "post"])
 @decorator.login_required_user
 def passbook_list():
-    passbook_id = None
-    if request.method == "POST":
-        passbook_id = request.form.get("passbookID")
+    passbooks = dao.get_passbook_list()
+    passbook_types = dao.get_passbook_type()
 
-    passbooks = dao.get_passbook_list(passbook_id)
+    if request.method == "POST":
+
+        passbook_id = request.form.get("keyword")
+        if passbook_id:
+            passbooks = dao.get_passbook_list(passbook_id=passbook_id)
+        else:
+            passbook_type = request.form.get("passbookType")
+            if passbook_type:
+                passbooks = dao.get_passbook_list(passbook_type_id=passbook_type)
+
+        keyword_passbook_type = request.form.get("keywordPassbookType")
+        if keyword_passbook_type:
+            if keyword_passbook_type.isnumeric():
+                passbook_types = dao.get_passbook_type(passbook_type_id=keyword_passbook_type)
+            else:
+                passbook_types = dao.get_passbook_type(passbook_type_name=keyword_passbook_type)
+
     page, per_page, offset = get_page_args(page_parameter='page',
                                            per_page_parameter='per_page')
+
     total = len(passbooks)
     pagination_passbooks = passbooks[offset: offset + per_page]
     pagination = Pagination(page=page, per_page=per_page, total=total,
                             css_framework='bootstrap4')
-
-    passbook_types = dao.get_passbook_type()
 
     return render_template("layouts/passbook_list.html",
                            passbooks=pagination_passbooks,
@@ -178,10 +190,30 @@ def passbook_list():
                            passbook_types=passbook_types)
 
 
-@app.route("/open-passbook", methods=["get", "post"])
+@app.route("/open-passbook/<passbook_id>", methods=["get", "post"])
 @decorator.login_required_user
-def open_passbook():
+def open_passbook(passbook_id):
+    if passbook_id != "0":
+        passbook = dao.find_passbook(passbook_id)
+        customer = dao.get_customer_by_id(passbook.customer_id)
+
+        return render_template("layouts/open_passbook.html",
+                               passbook=passbook,
+                               customer=customer,
+                               passbook_type=dao.get_passbook_type())
+
     customers = dao.find_customer()
+    if request.method == "POST":
+        keyword = request.form.get("keyword")
+        customer_id = request.form.get("customerId")
+        if customer_id:
+            customers = dao.find_customer(customer_id=customer_id)
+        else:
+            if keyword.isnumeric():
+                customers = dao.find_customer(identity_number=keyword)
+            else:
+                customers = dao.find_customer(name=keyword)
+
     page, per_page, offset = get_page_args(page_parameter='page',
                                            per_page_parameter='per_page')
     total = len(customers)
@@ -266,16 +298,49 @@ def report():
     passbook_types = dao.get_passbook_type()
     if request.method == "POST":
         date = request.form.get("date")
-
         passbook_type = request.form.get("passbookType")
-        month = request.form.get("month")
+        from_month = request.form.get("month")
 
         if date:
             report_revenue_day = dao.report_revenue_day(date)
+            transaction_slips = dao.get_transaction_slip_by_date(date)
+            report_passbook_type = dao.report_passbook_type(date)
 
             return render_template("layouts/report.html",
                                    passbook_types=passbook_types,
-                                   report_revenue_day=report_revenue_day)
+                                   report_revenue_day=report_revenue_day,
+                                   transaction_slips=transaction_slips,
+                                   report_passbook_type=report_passbook_type,
+                                   date=date)
+
+        if from_month:
+            from_month = from_month + "-01"
+            to_month = datetime.strptime(from_month, '%Y-%m-%d')
+            to_month += relativedelta(months=+1)
+            to_month = to_month.strftime("%Y-%m-%d")
+
+            report_open_close_passbook_month =\
+                dao.report_open_close_passbook_month(passbook_type=passbook_type,
+                                                     from_month=from_month,
+                                                     to_month=to_month,)
+            report_open_passbook_month = \
+                dao.report_open_passbook_month(passbook_type=passbook_type,
+                                                     from_month=from_month,
+                                                     to_month=to_month,)
+            report_close_passbook_month = \
+                dao.report_close_passbook_month(passbook_type=passbook_type,
+                                               from_month=from_month,
+                                               to_month=to_month, )
+
+            passbook_type_name = dao.get_passbook_type(passbook_type)
+
+            return render_template("layouts/report.html",
+                                   passbook_types=passbook_types,
+                                   report_open_close_passbook_month=report_open_close_passbook_month,
+                                   report_open_passbook_month=report_open_passbook_month,
+                                   report_close_passbook_month=report_close_passbook_month,
+                                   passbook_type_name=passbook_type_name[0],
+                                   month=from_month)
 
     return render_template("layouts/report.html",
                            passbook_types=passbook_types)

@@ -29,11 +29,13 @@ class Gender(enum.Enum):
     FEMALE = 2
     OTHER = 3
 
+
 class TransactionType(enum.Enum):
     WITHDRAW = -1
     MATURITY = 0
     OPEN_PASSBOOK = 1
     DEPOSIT = 2
+
 
 class Position(db.Model):
     __tablename__ = "position"
@@ -158,9 +160,10 @@ class TransactionSlip(db.Model):
     employee_id = Column(Integer, ForeignKey(Employee.id), nullable=False)
     transaction_date = Column(DateTime, nullable=False, default=datetime.now())
     transaction_type = Column(Enum(TransactionType), nullable=False)
-    transaction_amount = Column(Float, nullable=False)
-    interest_amount = Column(Float, nullable=True)
-    content = Column(String(300), nullable=False)
+    collect_amount = Column(Float, nullable=True, default=0)
+    spend_amount = Column(Float, nullable=True, default=0)
+    interest_amount = Column(Float, nullable=True, default=0)
+    content = Column(String(300), nullable=True, default="")
 
     def dump(self):
         return {'id': self.id,
@@ -169,7 +172,8 @@ class TransactionSlip(db.Model):
                 'employee_id': self.employee_id,
                 'transaction_date': self.transaction_date,
                 # 'transaction_type': self.transaction_type,
-                'transaction_amount': self.transaction_amount,
+                'collect_amount': self.collect_amount,
+                'spend_amount': self.spend_amount,
                 'interest_amount': self.interest_amount,
                 'content': self.content}
 

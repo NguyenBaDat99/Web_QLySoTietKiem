@@ -1,6 +1,6 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}- Giao dịch{% endblock title %}
+{% block title %}Giao dịch -{% endblock title %}
 
 {% block stylesheets %}
 <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/transaction-passbook.css') }}">
@@ -210,7 +210,8 @@
                 <div class="row">
                     <dt class="col-sm-4">Mã sổ:</dt>
                     <dd class="col-sm-8">
-                        <input type="number" id="passbookIdConfirm" class="form-control" value=""/>
+                        <input type="number" id="passbookIdConfirm" class="form-control" maxlength="15"
+                               oninput="javascript: if (this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength);"/>
                     </dd>
                     <dt class="col-sm-4"></dt>
                     <dd class="col-sm-8">
@@ -228,7 +229,7 @@
                         </div>
                     </div>
                     <div class="col-3">
-                        <a role="button" class="btn btn-secondary" href="/open-passbook">
+                        <a role="button" class="btn btn-secondary" href="/open-passbook/0">
                             Mở sổ
                         </a>
                     </div>
@@ -396,7 +397,11 @@
                         <tr>
                             <th scope="col">{{ transaction_slip.id }}</th>
                             <td>{{ transaction_slip.transaction_date }}</td>
-                            <th>{{ "{:,.0f}".format(transaction_slip.transaction_amount) }} VNĐ</th>
+                            {% if transaction_slip.collect_amount %}
+                            <th>{{ "{:,.0f}".format(transaction_slip.collect_amount) }} VNĐ</th>
+                            {% else %}
+                            <th>{{ "{:,.0f}".format(transaction_slip.spend_amount) }} VNĐ</th>
+                            {% endif %}
                             {% if transaction_slip.interest_amount %}
                             <td>{{ "{:,.0f}".format(transaction_slip.interest_amount) }} VNĐ</td>
                             {% else %}
@@ -434,10 +439,6 @@
         }
     }
 
-    function numberWithCommas(x) {
-        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-    }
-
     const formPassbook = document.getElementById('formPassbook');
     const formDeposit = document.getElementById('formDeposit');
     const formWithdraw = document.getElementById('formWithdraw');
@@ -472,6 +473,7 @@
         formWithdraw.style = "";
     }
 
+
 </script>
 
 {% if withdraw_date %}
@@ -492,6 +494,13 @@
                     console.log(data)
                     formDeposit.style = "pointer-events: none; opacity: 0.7; max-width: 550px;";
                     goFinish();
+                    drawFormFinish(data.transaction_slip[0].content,
+                                       data.transaction_slip[0].passbook_id,
+                                       data.passbook[0].passbook_type_id,
+                                       '{{ customer.name }}',
+                                       data.transaction_slip[0].transaction_date,
+                                       data.transaction_slip[0].collect_amount,
+                                       data.transaction_slip[0].interest_amount)
                 })
             } else {
                 msgDeposit.style = "";
@@ -520,6 +529,13 @@
                     console.log(data)
                     formWithdraw.style = "pointer-events: none; opacity: 0.7; max-width: 550px;";
                     goFinish();
+                    drawFormFinish(data.transaction_slip[0].content,
+                                       data.transaction_slip[0].passbook_id,
+                                       data.passbook[0].passbook_type_id,
+                                       '{{ customer.name }}',
+                                       data.transaction_slip[0].transaction_date,
+                                       data.transaction_slip[0].spend_amount,
+                                       data.transaction_slip[0].interest_amount)
                 })
             } else {
                 msgWithdraw.style = "";
@@ -530,6 +546,43 @@
             msgWithdraw.innerText = "Vui lòng nhập số tiền rút hợp lệ"
         }
     }
+
+    function numberWithCommas(x) {
+        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    function drawFormFinish(title, passbook_id, passbook_type, customer, time, spend_amount, interest_amount) {
+        let transaction = numberWithCommas(spend_amount);
+        let interest = numberWithCommas(interest_amount);
+        formFinish.innerHTML =
+        `<div class="container">
+            <div class="row">
+                <h1 class="display-4" style="font-size: 1.8rem;">${title} thành công</h1>
+            </div>
+                <div class="dropdown-divider"></div>
+
+            <dl class="row">
+              <dt class="col-sm-4">Mã sổ: </dt>
+              <dd class="col-sm-8">${passbook_id}</dd>
+
+              <dt class="col-sm-4">Loại sổ: </dt>
+              <dd class="col-sm-8">${passbook_type}</dd>
+
+              <dt class="col-sm-4">Khách hàng: </dt>
+              <dd class="col-sm-8">${customer}</dd>
+
+              <dt class="col-sm-4">Thời gian giao dịch: </dt>
+              <dd class="col-sm-8"> ${time}</dd>
+
+              <dt class="col-sm-4">Số tiền giao dịch: </dt>
+              <dd class="col-sm-8">${transaction} VNĐ</dd>
+
+              <dt class="col-sm-4">Tiền lãi: </dt>
+              <dd class="col-sm-8">${interest} VNĐ</dd>
+            </dl>
+        </div>`;
+    }
+
 
 </script>
 {% endif %}
@@ -546,6 +599,13 @@
             }).then(res => res.json()).then(data => {
                 console.log(data)
                 goFinish();
+                drawFormFinish(data.transaction_slip[0].content,
+                                       data.transaction_slip[0].passbook_id,
+                                       data.passbook[0].passbook_type_id,
+                                       '{{ customer.name }}',
+                                       data.transaction_slip[0].transaction_date,
+                                       data.transaction_slip[0].collect_amount,
+                                       data.transaction_slip[0].interest_amount)
                 formDeposit.style = "display: none;";
                 formWithdraw.style = "display: none;";
         })
@@ -564,10 +624,18 @@
             }).then(res => res.json()).then(data => {
                 console.log(data)
                 goFinish();
+                drawFormFinish(data.transaction_slip[0].content,
+                                       data.transaction_slip[0].passbook_id,
+                                       data.passbook[0].passbook_type_id,
+                                       '{{ customer.name }}',
+                                       data.transaction_slip[0].transaction_date,
+                                       data.transaction_slip[0].spend_amount,
+                                       data.transaction_slip[0].interest_amount)
                 formDeposit.style = "display: none;";
                 formWithdraw.style = "display: none;";
         })
     }
+
 
 </script>
 {% endif %}

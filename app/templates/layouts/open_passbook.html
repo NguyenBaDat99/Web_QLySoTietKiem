@@ -1,9 +1,9 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}- Mổ sổ tiết kiệm{% endblock title %}
+{% block title %}Mổ sổ tiết kiệm -{% endblock title %}
 
 {% block stylesheets %}
-<link rel="stylesheet" href="static/assets/css/open-passbook.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='assets/css/open-passbook.css') }}">
 {% endblock stylesheets %}
 
 {% block content %}
@@ -11,20 +11,24 @@
 <div class="container-fluid">
     <div class="row" style="width:100%">
 
+
         <!--    Tra cứu   -->
         <div class="col" id="formSearch">
             <div class="container" style="max-width: 100%">
-<!--                <h1 class="display-4" style="font-size: 1.8rem;">Tra cứu</h1>-->
+                <!--                <h1 class="display-4" style="font-size: 1.8rem;">Tra cứu</h1>-->
                 <div class="row">
+                    {% if not passbook %}
                     <div class="col">
                         <nav class="navbar navbar-dark bg-dark">
-                            <a class="navbar-brand">Danh sách khách hàng</a>
+                            <a class="navbar-brand" href="{{ url_for('open_passbook', passbook_id=0) }}">Danh sách khách
+                                hàng</a>
                             <form class="form-inline" method="post">
                                 &emsp;
-                                <input class="form-control mr-sm-2" name="ttTimKiem" type="search"
-                                       placeholder="Nhập thông tin"
-                                       aria-label="Search" required maxlength="20">
-                                <input class="btn btn-outline-light" value="Tìm kiếm">
+                                <input class="form-control mr-sm-2" type="text"
+                                       placeholder="Nhập thông tin" name="keyword"
+                                       aria-label="Search" required maxlength="20"
+                                       oninput="javascript: if (this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength);">
+                                <input class="btn btn-outline-light" type="submit" value="Tìm kiếm">
                             </form>
                         </nav>
                         <table class="table">
@@ -53,11 +57,26 @@
                             {% endfor %}
                             </tbody>
                         </table>
-                        {{ pagination.links }}
+                        <div class="row">
+                            <div class="col-8">
+                                {{ pagination.links }}
+                            </div>
+                            <div class="col">
+                                <form class="form-inline" method="post">                                    &emsp;
+                                    <input class="form-control mr-sm-2" type="number"
+                                           placeholder="Nhập mã khách hàng" name="customerId"
+                                           aria-label="Search" required maxlength="15"
+                                           oninput="javascript: if (this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength);">
+                                    <input class="btn btn-dark" type="submit" value="Tìm">
+                                </form>
+                            </div>
+                        </div>
                     </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
+
 
         <!--    Thông tin khách hàng    -->
         <div class="col" id="formCustomer">
@@ -70,17 +89,19 @@
                 <form method="post" action="">
                     <div class="form-group">
                         <label>Số chứng minh nhân dân</label><i style="color: red">*</i>
-                        <input type="number" class="form-control" id="identityNumber">
+                        <!--                        <input type="number" class="form-control" id="identityNumber">-->
+                        <input id="identityNumber" class="form-control" type="number" maxlength="10"
+                               oninput="javascript: if (this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength);"/>
                     </div>
                     <div class="form-group">
                         <div class="row">
                             <div class="col-8">
                                 <label>Họ tên</label><i style="color: red">*</i>
-                                <input type="text" class="form-control" id="name">
+                                <input type="text" class="form-control" id="name" maxlength="50">
                             </div>
                             <div class="col-4">
                                 <label>Số điện thoại</label>
-                                <input type="number" class="form-control" value="" id="phone">
+                                <input type="number" class="form-control" id="phone" maxlength="30">
                             </div>
                         </div>
                     </div>
@@ -161,7 +182,8 @@
                     </div>
                     <div class="form-group">
                         <label>Số tiền gửi</label><i style="color: red">*</i>
-                        <input type="number" class="form-control" id="depositAmount">
+                        <input type="number" class="form-control" id="depositAmount" maxlength="13"
+                               oninput="javascript: if (this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength);">
                     </div>
                     <div class="alert alert-danger" role="alert" id="msgPassbook" style="display: none;">
 
@@ -172,8 +194,7 @@
                     <a class="btn btn-success" id="btnUpdatePassbook" onclick="updatePassbook()">
                         Mở sổ tiết kiệm
                     </a>
-                    <a class="btn btn-secondary" onclick="goCustomer()" role="button">Quay lại</a>
-                    <!--        <button type="submit" class="btn btn-secondary mb-2" >Hủy bỏ</button>-->
+                    <a class="btn btn-secondary" onclick="cancel()" role="button">Hủy bỏ</a>
                 </form>
             </div>
         </div>
@@ -195,7 +216,7 @@
 {% block javascripts %}
 <script>
     function cancel() {
-        window.location.href = "/open-passbook";
+        window.location.href = "/open-passbook/0";
       }
 
       const formCustomer = document.getElementById('formCustomer');
@@ -274,6 +295,7 @@
       }
 
       function chooseCustomer(customer_id) {
+        msgCustomer.style = "display: none";
         fetch("/api/find-customer", {
                 body: JSON.stringify({
                     "customer_id": customer_id
@@ -428,7 +450,7 @@
                                        data.passbook[0].passbook_type_id,
                                        customerName.value,
                                        data.transaction_slip[0].transaction_date,
-                                       data.transaction_slip[0].transaction_amount)
+                                       data.transaction_slip[0].collect_amount)
                         goFinish();
                     })
                 } else {
@@ -468,7 +490,7 @@
                                        data.passbook[0].passbook_type_id,
                                        customerName.value,
                                        data.transaction_slip[0].transaction_date,
-                                       data.transaction_slip[0].transaction_amount)
+                                       data.transaction_slip[0].collect_amount)
                         goFinish();
                     })
                 } else {
@@ -481,7 +503,6 @@
             msgPassbook.innerText = "Vui lòng nhập đầy đủ thông tin"
         }
       }
-
 
       function drawFormFinish(title, passbook_id, passbook_type, customer, time, amount) {
         let transaction_amount = numberWithCommas(amount);
@@ -511,7 +532,23 @@
         </div>`;
       }
 
+
+
 </script>
+
+{% if passbook %}
+<script>
+            identityNumber.value = {{ customer.identity_card_number }};
+            name.value = '{{ customer.name }}';
+            phone.value = {{ customer.phone }};
+
+            customerId.value = {{ customer.id }};
+            customerName.value = '{{ customer.name }}';
+
+            goPassbookOld({{ passbook.id }});
+</script>
+{% endif %}
+
 {% endblock javascripts %}
 
 

@@ -23,7 +23,7 @@
             crossorigin="anonymous"></script>
 
     <title>
-        Ngân Hàng {% block title %}{% endblock title %}
+        {% block title %}{% endblock title %} Ngân Hàng
     </title>
 
     <!-- Specific Page CSS goes HERE  -->
@@ -74,7 +74,6 @@
 
 
 <!--    Scripts create_passbook.html    -->
-
         if("{{ msg_pass }}" != "" || "{{ err_msg_pass }}" != "" ){
             $('#changePasswordModal').modal('show')
         }

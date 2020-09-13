@@ -34,7 +34,7 @@ def create_passbook():
                                                customer_id=passbook.customer_id,
                                                employee_id=current_user.id,
                                                transaction_type=TransactionType.OPEN_PASSBOOK,
-                                               transaction_amount=balance_amount,
+                                               collect_amount=balance_amount,
                                                content="Tạo sổ tiết kiệm mới")
 
         return jsonify({"status": 200, "passbook": [passbook.dump()], "transaction_slip": [transaction.dump()]})
@@ -59,7 +59,7 @@ def update_passbook():
                                                customer_id=passbook.customer_id,
                                                employee_id=current_user.id,
                                                transaction_type=TransactionType.OPEN_PASSBOOK,
-                                               transaction_amount=balance_amount,
+                                               collect_amount=balance_amount,
                                                content="Mở sổ tiết kiệm cũ")
 
         return jsonify({"status": 200, "passbook": [passbook.dump()], "transaction_slip": [transaction.dump()]})
@@ -84,7 +84,7 @@ def update_passbook_deposit():
                                                customer_id=passbook.customer_id,
                                                employee_id=current_user.id,
                                                transaction_type=TransactionType.DEPOSIT,
-                                               transaction_amount=deposit_amount,
+                                               collect_amount=deposit_amount,
                                                interest_amount=interest_amount,
                                                content="Gửi tiền")
 
@@ -106,7 +106,6 @@ def update_passbook_maturity():
                                                customer_id=passbook.customer_id,
                                                employee_id=current_user.id,
                                                transaction_type=TransactionType.MATURITY,
-                                               transaction_amount=0,
                                                content="Đáo hạn")
 
         return jsonify({"status": 200, "passbook": [passbook.dump()], "transaction_slip": [transaction.dump()]})
@@ -134,8 +133,8 @@ def update_passbook_withdraw():
         transaction = dao.add_transaction_slip(passbook_id=passbook.id,
                                                customer_id=passbook.customer_id,
                                                employee_id=current_user.id,
-                                               transaction_type=TransactionType.DEPOSIT,
-                                               transaction_amount=withdraw_amount,
+                                               transaction_type=TransactionType.WITHDRAW,
+                                               spend_amount=withdraw_amount,
                                                interest_amount=interest_amount,
                                                content="Rút tiền")
 

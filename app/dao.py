@@ -1,6 +1,7 @@
 import hashlib
+import sqlite3
 
-from sqlalchemy import func, join, select, outerjoin
+from sqlalchemy import func, literal, Date, and_
 
 from app import db
 from app.models import Employee, Passbook, ActivityLog, Customer, PassbookTypes, TransactionSlip, TransactionType
@@ -50,7 +51,7 @@ def get_passbook_list(passbook_id=None, customer_id=None, passbook_type_id=None,
     elif customer_id is not None:
         passbooks = passbooks.filter(Passbook.customer_id == customer_id)
     elif passbook_type_id is not None:
-        passbooks = passbooks.filter(Passbook.passbook_type_id == passbook_id)
+        passbooks = passbooks.filter(Passbook.passbook_type_id == passbook_type_id)
     elif open_date is not None:
         passbooks = passbooks.filter(Passbook.open_date == open_date)
 
@@ -89,14 +90,18 @@ def add_activity_log(activity, description, employee_id):
 
 
 def add_transaction_slip(passbook_id, customer_id, employee_id, transaction_type,
-                         transaction_amount, interest_amount=None, content=None):
+                         collect_amount=None, spend_amount=None, interest_amount=None, content=None):
     transaction = TransactionSlip()
 
     transaction.passbook_id = passbook_id
     transaction.customer_id = customer_id
     transaction.employee_id = employee_id
     transaction.transaction_type = transaction_type
-    transaction.transaction_amount = transaction_amount
+
+    if collect_amount is not None:
+        transaction.collect_amount = collect_amount
+    if spend_amount is not None:
+        transaction.spend_amount = spend_amount
     if interest_amount is not None:
         transaction.interest_amount = interest_amount
     if content is not None:
@@ -108,11 +113,13 @@ def add_transaction_slip(passbook_id, customer_id, employee_id, transaction_type
     return transaction
 
 
-def get_passbook_type(passbook_type_id=None):
+def get_passbook_type(passbook_type_id=None, passbook_type_name=None):
     passbook_type = PassbookTypes.query
 
     if passbook_type_id is not None:
         passbook_type = passbook_type.filter(PassbookTypes.id.contains(passbook_type_id))
+    if passbook_type_name is not None:
+        passbook_type = passbook_type.filter(PassbookTypes.passbook_type_name.contains(passbook_type_name))
 
     return passbook_type.all()
 
@@ -182,9 +189,9 @@ def find_customer(customer_id=None, identity_number=None, name=None):
     customer = Customer.query
 
     if customer_id is not None:
-        customer = customer.filter(Customer.id == customer_id)
+        customer = customer.filter(Customer.id.contains(customer_id))
     elif identity_number is not None:
-        customer = customer.filter(Customer.identity_card_number == identity_number)
+        customer = customer.filter(Customer.identity_card_number.contains(identity_number))
     elif name is not None:
         customer = customer.filter(Customer.name.contains(name))
 
@@ -207,6 +214,16 @@ def get_transaction_slip(transaction_id=None, passbook_id=None, customer_id=None
         transaction_slips = transaction_slips.filter(TransactionSlip.transaction_type == transaction_type)
 
     return transaction_slips.all()
+
+
+def get_transaction_slip_by_date(date):
+    from_date = date + ' 00:00:00'
+    to_date = date + ' 23:59:59'
+
+    transaction_slips = TransactionSlip.query
+    transaction_slips = transaction_slips.filter(TransactionSlip.transaction_date.between(from_date, to_date))
+
+    return transaction_slips
 
 
 def get_last_transaction_date(passbook_id):
@@ -234,7 +251,7 @@ def get_maturity_time(passbook_id, open_date):
     for p in transaction_slips:
         if p.passbook_id == passbook_id and \
                 p.transaction_date > open_date and \
-                p.transaction_amount == 0:
+                p.spend_amount == 0:
             maturity_times += 1
 
     return maturity_times
@@ -246,8 +263,9 @@ def report_revenue_day(date):
 
     result = db.session.query(
         PassbookTypes.passbook_type_name.label('passbook_type_name'),
-        func.sum(TransactionSlip.transaction_amount).label('collect'),
-        func.sum(TransactionSlip.interest_amount).label('spend')) \
+        func.sum(TransactionSlip.collect_amount).label('collect_amount'),
+        func.sum(TransactionSlip.spend_amount).label('spend_amount'),
+        func.sum(TransactionSlip.interest_amount).label('interest_amount'), ) \
         .join(Passbook,
               Passbook.passbook_type_id == PassbookTypes.id) \
         .join(TransactionSlip,
@@ -256,43 +274,88 @@ def report_revenue_day(date):
         .group_by(PassbookTypes.passbook_type_name) \
         .all()
 
-    collect = db.session.query(
-        TransactionSlip.passbook_id.label('passbook_id'),
-        func.sum(TransactionSlip.transaction_amount).label('collect'),
-        func.sum(TransactionSlip.transaction_amount*0).label('spend_withdraw'),
-        func.sum(TransactionSlip.transaction_amount*0).label('spend_interest'),) \
+    return result
+
+
+def report_passbook_type(date):
+    from_date = date + ' 00:00:00'
+    to_date = date + ' 23:59:59'
+
+    result = db.session.query(
+        Passbook.id,
+        PassbookTypes.passbook_type_name,
+        PassbookTypes.interest_rate,
+        PassbookTypes.term) \
+        .join(PassbookTypes,
+              PassbookTypes.id == Passbook.passbook_type_id) \
+        .join(TransactionSlip,
+              TransactionSlip.passbook_id == Passbook.id) \
         .filter(TransactionSlip.transaction_date.between(from_date, to_date)) \
-        .filter(TransactionSlip.transaction_type != TransactionType.WITHDRAW) \
-        .group_by(TransactionSlip.passbook_id) \
+        .group_by(Passbook.id) \
+        .all()
+    return result
+
+
+def report_open_close_passbook_month(passbook_type, from_month, to_month):
+    from_month = from_month + ' 00:00:00'
+    to_month = to_month + ' 00:00:00'
+
+    result = db.session.query(
+        TransactionSlip.transaction_date.cast(Date).label('transaction_date'),
+        func.COUNT(func.IF(TransactionSlip.transaction_type == TransactionType.OPEN_PASSBOOK, 1, None))
+            .label('passbook_open'),
+        func.COUNT(func.IF(and_(TransactionSlip.transaction_type == TransactionType.WITHDRAW,
+                                Passbook.balance_amount == 0), 1, None))
+            .label('passbook_close'), ) \
+        .join(Passbook,
+              Passbook.id == TransactionSlip.passbook_id) \
+        .join(PassbookTypes,
+              PassbookTypes.id == Passbook.passbook_type_id) \
+        .filter(PassbookTypes.id == passbook_type) \
+        .filter(TransactionSlip.transaction_date.between(from_month, to_month)) \
+        .group_by(TransactionSlip.transaction_date.cast(Date)) \
         .all()
 
-    # s1 = select(TransactionSlip.passbook_id.label('passbook_id'),
-    #             func.sum(TransactionSlip.transaction_amount).label('collect'))\
-    #     .where(TransactionSlip.transaction_date.between(from_date, to_date))\
-    #     .where(TransactionSlip.transaction_type != TransactionType.WITHDRAW)\
-    #     .group_by(TransactionSlip.passbook_id)
+    return result
 
 
+def report_open_passbook_month(passbook_type, from_month, to_month):
+    from_month = from_month + ' 00:00:00'
+    to_month = to_month + ' 00:00:00'
 
-    spend_withdraw = db.session.query(
-        TransactionSlip.passbook_id.label('passbook_id'),
-        func.sum(TransactionSlip.transaction_amount).label('spend')) \
-        .filter(TransactionSlip.transaction_date.between(from_date, to_date)) \
-        .filter(TransactionSlip.transaction_type == TransactionType.WITHDRAW) \
-        .group_by(TransactionSlip.passbook_id) \
+    result = db.session.query(
+        Passbook.id,
+        Passbook.customer_id,
+        Passbook.open_date,
+        Passbook.balance_amount)\
+        .join(TransactionSlip,
+              TransactionSlip.passbook_id == Passbook.id)\
+        .join(PassbookTypes,
+              PassbookTypes.id == Passbook.passbook_type_id)\
+        .filter(PassbookTypes.id == passbook_type)\
+        .filter(TransactionSlip.transaction_date.between(from_month, to_month))\
+        .filter(TransactionSlip.transaction_type == TransactionType.OPEN_PASSBOOK)\
         .all()
 
-    spend_interest = db.session.query(
-        TransactionSlip.passbook_id.label('passbook_id'),
-        func.sum(TransactionSlip.interest_amount).label('spend')) \
-        .filter(TransactionSlip.transaction_date.between(from_date, to_date)) \
-        .group_by(TransactionSlip.passbook_id) \
-        .all()
+    return result
 
-    # spend = spend_interest
-    # if spend_withdraw:
-    #     spend = spend_interest.union_all(spend_withdraw)
-    #
-    # result = collect.union_all(spend)
+
+def report_close_passbook_month(passbook_type, from_month, to_month):
+    from_month = from_month + ' 00:00:00'
+    to_month = to_month + ' 00:00:00'
+
+    result = db.session.query(
+        Passbook.id,
+        Passbook.customer_id,
+        Passbook.open_date,)\
+        .join(TransactionSlip,
+              TransactionSlip.passbook_id == Passbook.id)\
+        .join(PassbookTypes,
+              PassbookTypes.id == Passbook.passbook_type_id)\
+        .filter(PassbookTypes.id == passbook_type)\
+        .filter(TransactionSlip.transaction_date.between(from_month, to_month))\
+        .filter(TransactionSlip.transaction_type == TransactionType.WITHDRAW)\
+        .filter(Passbook.balance_amount == 0) \
+        .all()
 
     return result

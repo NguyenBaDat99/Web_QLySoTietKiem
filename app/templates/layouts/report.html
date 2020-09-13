@@ -1,6 +1,6 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}- Báo cáo{% endblock title %}
+{% block title %}Báo cáo -{% endblock title %}
 
 {% block stylesheets %}
 <link rel="stylesheet" href="static/assets/css/report.css">
@@ -10,6 +10,9 @@
 
 <div class="container-fluid ">
     <div class="row">
+
+        {% if not report_open_close_passbook_month %}
+        <!--    Báo cáo doanh số hoạt động ngày    -->
         <div class="col">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item">
@@ -27,20 +30,23 @@
                             <div class="input-group-prepend">
                                 <span class="input-group-text">Chọn ngày</span>
                             </div>
-                            <input type="date" class="form-control" name="date">
+                            <input type="date" class="form-control" name="date" required>
                             <div class="input-group-append">
                                 <button class="btn btn-success my-2 my-sm-0" type="submit">Thống kê</button>
                             </div>
                         </div>
                     </form>
+
+                    {% if report_revenue_day %}
+                    &emsp;
+                    <a class="btn btn-light my-2 my-sm-0" href="{{ url_for('report') }}" role="button">Quay lại</a>
+                    {% endif %}
                 </div>
             </nav>
-
             <table class="table">
                 <thead class="thead-light">
                 <tr>
-<!--                    <th scope="col">#</th>-->
-                    <th scope="col">Loại tiết kiệm</th>
+                    <th scope="row">Loại tiết kiệm</th>
                     <th scope="col">Tổng thu</th>
                     <th scope="col">Tổng chi</th>
                     <th scope="col">Chênh lệch</th>
@@ -49,23 +55,162 @@
                 <tbody>
                 {% for r in report_revenue_day %}
                 <tr>
-<!--                    <th scope="row">1</th>-->
-                    <td>{{ r.passbook_type_name }}</td>
-                    <td>{{ "{:,.0f}".format(r.collect) }} VNĐ</td>
-                    <td>{{ "{:,.0f}".format(r.spend) }} VNĐ</td>
-                    <td>{{ "{:,.0f}".format(r.collect - r.spend) }} VNĐ</td>
+                    <th scope="row">{{ r.passbook_type_name }}</th>
+                    <td>{{ "{:,.0f}".format(r.collect_amount) }} VNĐ</td>
+                    <td>{{ "{:,.0f}".format(r.spend_amount + r.interest_amount) }} VNĐ</td>
+                    <td>{{ "{:,.0f}".format(r.collect_amount - (r.spend_amount + r.interest_amount)) }} VNĐ</td>
                 </tr>
                 {% endfor %}
 
                 </tbody>
             </table>
 
+            {% if report_revenue_day %}
+            <div class="col">
+                <nav class="navbar navbar-expand-lg navbar-light bg-light"
+                     style="background-color: rgb(243 255 243 / 25%) !important ;
+                     border-color: rgba(40,182,44,0.5);">
+                    <a class="navbar-brand">Loại tiết kiệm của các sổ</a>
+                </nav>
+                <div style="height: 500px; overflow: auto;">
+                    <table class="table">
+                        <thead class="thead-light">
+                        <tr>
+                            <th scope="col">Mã sổ</th>
+                            <th scope="col">Loại tiết kiệm</th>
+                            <th scope="col">Lãi suất</th>
+                            <th scope="col">Kỳ hạn</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for t in report_passbook_type %}
+                        <tr>
+                            <td>{{ t.id }}</td>
+                            <td>{{ t.passbook_type_name }}</td>
+                            <td>{{ "{:,.4f}".format(t.interest_rate) }} %</td>
+                            <td>{{ t.term }} Tháng</td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
         </div>
+        {% endif %}
+
+        {% if report_revenue_day %}
+        <div class="col">
+            <nav class="navbar navbar-expand-lg navbar-light bg-light"
+                 style="background-color: rgb(243 255 243 / 25%) !important ;
+                     border-color: rgba(40,182,44,0.5);">
+                <a class="navbar-brand">Các giao dịch trong ngày {{ date }}</a>
+            </nav>
+            <div style="height: 800px; overflow: auto;">
+                <table class="table">
+                    <thead class="thead-light">
+                    <tr>
+                        <th scope="col">Mã sổ</th>
+                        <th scope="col">Khách hàng</th>
+                        <th scope="col">NV giao dịch</th>
+                        <th scope="col">Loại giao dịch</th>
+                        <th scope="col">Khoản thu</th>
+                        <th scope="col">Khoản chi</th>
+                        <th scope="col">Khoản trả lãi</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for t in transaction_slips %}
+                    <tr>
+                        <td>{{ t.passbook_id }}</td>
+                        <td>{{ t.customer_id }}</td>
+                        <td>{{ t.employee_id }}</td>
+                        <td>{{ t.content }}</td>
+                        <td>{{ "{:,.0f}".format(t.collect_amount) }} VNĐ</td>
+                        <td>{{ "{:,.0f}".format(t.spend_amount) }} VNĐ</td>
+                        <td>{{ "{:,.0f}".format(t.interest_amount) }} VNĐ</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if report_open_close_passbook_month %}
+        <div class="col">
+            <div class="row">
+
+                <div class="col">
+                    <nav class="navbar navbar-expand-lg navbar-light bg-light"
+                         style="background-color: rgb(243 255 243 / 25%) !important ;
+                     border-color: rgba(40,182,44,0.5);">
+                        <a class="navbar-brand">Danh sách các sổ mở</a>
+                    </nav>
+                    <div style="height: 800px; overflow: auto;">
+                        <table class="table">
+                            <thead class="thead-light">
+                            <tr>
+                                <th scope="col">Mã sổ</th>
+                                <th scope="col">Khách hàng</th>
+                                <th scope="col">Ngày mở sổ</th>
+                                <th scope="col">Số dư</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for t in report_open_passbook_month %}
+                            <tr>
+                                <td>{{ t.id }}</td>
+                                <td>{{ t.customer_id }}</td>
+                                <td>{{ t.open_date }}</td>
+                                <td>{{ "{:,.0f}".format(t.balance_amount) }} VNĐ</td>
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="col">
+                    <nav class="navbar navbar-expand-lg navbar-light bg-light"
+                         style="background-color: rgb(243 255 243 / 25%) !important ;
+                     border-color: rgba(40,182,44,0.5);">
+                        <a class="navbar-brand">Danh sách các sổ đóng</a>
+                    </nav>
+                    <div style="height: 800px; overflow: auto;">
+                        <table class="table">
+                            <thead class="thead-light">
+                            <tr>
+                                <th scope="col">Mã sổ</th>
+                                <th scope="col">Khách hàng</th>
+                                <th scope="col">Ngày mở sổ</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for t in report_close_passbook_month %}
+                            <tr>
+                                <td>{{ t.id }}</td>
+                                <td>{{ t.customer_id }}</td>
+                                <td>{{ t.open_date }}</td>
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        {% endif %}
+
+        {% if not report_revenue_day %}
+        <!--    Báo cáo mở đóng sổ tháng    -->
         <div class="col">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item">
                     <h1 class="display-4" style="font-size: 1.8rem;">
-                        BÁO CÁO MỞ/ĐÓNG SỔ THÁNG
+                        BÁO CÁO MỞ/ĐÓNG SỔ THÁNG{% if month %}: {{ month[0:7] }}{% endif %}
                     </h1>
                 </li>
             </ol>
@@ -73,32 +218,39 @@
             <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
                 <div class="collapse navbar-collapse">
 
-                    <form class="form-inline my-2 my-lg-0" action="{{ url_for('report') }}">
+                    <form class="form-inline my-2 my-lg-0" action="{{ url_for('report') }}" method="post">
                         <div class="input-group" style="width: 600px">
                             <div class="input-group-prepend">
-                                <span class="input-group-text" name="passbookType">Loại tiết kiệm</span>
+                                <span class="input-group-text">Loại tiết kiệm</span>
                             </div>
-                            <select class="custom-select">
+                            <select class="custom-select" name="passbookType" required>
                                 {% for p in passbook_types %}
                                 <option value="{{ p.id }}">{{p.passbook_type_name}}</option>
                                 {% endfor %}
                             </select>
                             <div class="input-group-prepend">
-                                <span class="input-group-text" name="month">Tháng</span>
+                                <span class="input-group-text">Tháng</span>
                             </div>
-                            <input type="month" class="form-control">
+                            <input type="month" class="form-control" name="month" required>
                             <div class="input-group-append">
                                 <button class="btn btn-success" type="submit">Thống kê</button>
                             </div>
                         </div>
                     </form>
+                    {% if report_open_close_passbook_month %}
+                    &emsp;
+                    <a class="btn btn-light my-2 my-sm-0" href="{{ url_for('report') }}" role="button">Quay lại</a>
+                    {% endif %}
+                    {% if passbook_type_name %}
+                    <div class="navbar-nav">
+                        <a class="nav-link active">{{ passbook_type_name.passbook_type_name }} </a>
+                    </div>
+                    {% endif %}
                 </div>
             </nav>
-
             <table class="table">
                 <thead class="thead-light">
                 <tr>
-                    <th scope="col">#</th>
                     <th scope="col">Ngày</th>
                     <th scope="col">Số sổ mở</th>
                     <th scope="col">Số sổ đóng</th>
@@ -106,16 +258,19 @@
                 </tr>
                 </thead>
                 <tbody>
+                {% for r in report_open_close_passbook_month %}
                 <tr>
-                    <th scope="row">1</th>
-                    <td>Mark</td>
-                    <td>Otto</td>
-                    <td>@mdo</td>
-                    <td>@mdo</td>
+                    <th scope="row">{{ r.transaction_date }}</th>
+                    <td>{{ r.passbook_open }}</td>
+                    <td>{{ r.passbook_close }}</td>
+                    <td>{{ r.passbook_open - r.passbook_close }}</td>
                 </tr>
+                {% endfor %}
                 </tbody>
             </table>
         </div>
+        {% endif %}
+
     </div>
 </div>
 
